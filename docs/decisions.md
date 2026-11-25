@@ -1,6 +1,6 @@
 # Historical Architecture Decisions
 
-This file keeps short historical ADR notes. It is not the primary operator documentation. Public release documentation is maintained in English; `README.de.md` is the only German top-level user document.
+This file keeps short historical ADR notes. It is not the primary operator documentation. Public release documentation is maintained in English. Edu Visitor Portal removed upstream's German `README.de.md`; German remains available through the UI translations.
 
 ## ADR-001 Language And Project Conventions
 
@@ -10,14 +10,14 @@ Decision:
 
 - Code, class names, variables, methods, branches, commits and technical tickets use English.
 - Public documentation in `README.md` and `docs/` uses English.
-- `README.de.md` remains as the German entry point.
+- (Edu Visitor Portal) The German `README.de.md` entry point was removed; `README.md` is the only top-level readme.
 - UI strings are translatable and may be localized through Laravel language files.
 
 Reason:
 
 - Laravel and most ecosystem documentation are English.
 - Open-source release material should be understandable internationally.
-- German remains useful for local users through `README.de.md` and UI translations.
+- German remains useful for local users through the UI translations.
 
 ## ADR-002 Permission System
 

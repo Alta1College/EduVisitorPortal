@@ -4,7 +4,7 @@ GitHub releases can contain multiple downloadable archives. Choose the artifact 
 
 ## Which ZIP Should I Download?
 
-Use `VisitorPortal-demo-vX.Y.Z.zip` for a quick local demo.
+Use `EduVisitorPortal-demo-vX.Y.Z.zip` for a quick local demo.
 
 - Intended for non-technical trial runs.
 - Contains `docker-compose.demo.yml`, start/stop/reset/update scripts and a demo README.
@@ -13,7 +13,7 @@ Use `VisitorPortal-demo-vX.Y.Z.zip` for a quick local demo.
 - Includes demo credentials and demo data behavior.
 - Not suitable as a production configuration.
 
-Use `besucherportal-vX.Y.Z.zip` for source-based review or deployment work.
+Use `eduvisitorportal-vX.Y.Z.zip` for source-based review or deployment work.
 
 - Contains the project source from the release workflow.
 - Excludes generated dependency directories such as `backend/vendor` and `backend/node_modules`.
@@ -24,18 +24,18 @@ Use the GitHub-generated `Source code (zip)` or `Source code (tar.gz)` only if y
 
 - It is not tailored by VisitorPortal's release workflow.
 - It may still contain placeholders such as `RELEASE_VERSION_PLACEHOLDER`.
-- It is usually less convenient than `besucherportal-vX.Y.Z.zip`.
+- It is usually less convenient than `eduvisitorportal-vX.Y.Z.zip`.
 
 Use the container image for production Docker deployments.
 
 ```text
-ghcr.io/p0etinc0de/besucherportal:vX.Y.Z
+ghcr.io/alta1college/eduvisitorportal:vX.Y.Z
 ```
 
 Set it in the production `.env`:
 
 ```env
-VISITORPORTAL_IMAGE=ghcr.io/p0etinc0de/besucherportal:vX.Y.Z
+VISITORPORTAL_IMAGE=ghcr.io/alta1college/eduvisitorportal:vX.Y.Z
 ```
 
 ## Production Warning
@@ -48,7 +48,7 @@ Before going live, review [Production Deployment](deployment.md), [Security Hard
 
 - Production Docker and source/LAMP: follow [Production Updates](deployment.md#updates).
 - Existing demos: select the desired tag in the existing `.env.demo`, then run the update script described in [Setup](setup.md#stop-reset-and-update).
-- Version-specific requirements and changes: see the [v0.9.1 release notes](releases/v0.9.1.md), including the PHP requirement `>=8.4.27,<8.5` for source/LAMP installations.
+- Version-specific requirements and changes: see the [v1.0.0 release notes](releases/v1.0.0.md); source/LAMP installations need PHP 8.4.
 
 Retain the existing database, storage volumes and `APP_KEY`. A demo reset is destructive and is not an update method.
 
@@ -57,7 +57,7 @@ Retain the existing database, storage volumes and `APP_KEY`. A demo reset is des
 The `Docker Image` workflow in `.github/workflows/docker-image.yml` builds the production Docker target `app`. A push to `main` builds and publishes a SHA-tagged image. A version-tag push additionally:
 
 1. Verifies that the tagged commit belongs to the history of `main`.
-2. Builds and pushes `ghcr.io/p0etinc0de/besucherportal:<tag>`.
+2. Builds and pushes `ghcr.io/alta1college/eduvisitorportal:<tag>`.
 3. Creates the demo ZIP with its image version pinned to the tag.
 4. Creates the source ZIP using `git archive` of the tagged commit and replaces the demo-version placeholder. Untracked files, local secrets and dependency directories are not included in that snapshot.
 5. Attaches both ZIPs to a GitHub release **draft**, using `docs/releases/<tag>.md` as the release description.

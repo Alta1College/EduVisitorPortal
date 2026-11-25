@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -152,7 +153,9 @@ class RecurringVisitService
             }
 
             $occurrenceNumber++;
-            $occurrenceStart = $this->nextOccurrenceStart($occurrenceStart, $series);
+            // Fork: counted from the series start, so monthly dates do not drift (31 Jan → 28 Feb
+            // → 31 Mar, not 28 Mar).
+            $occurrenceStart = $this->advanceOccurrenceStart($series->starts_at->copy(), $series, $occurrenceNumber - 1);
         }
 
         $series->forceFill([
@@ -266,7 +269,9 @@ class RecurringVisitService
             ->where(function ($query) use ($visit) {
                 $query->where('recurrence_is_modified', false)
                     ->orWhere('id', $visit->id);
-            });
+            })
+            // Fork: occurrences with attendance are visitor-log history and stay as they were.
+            ->whereDoesntHave('visitors', fn ($query) => $query->whereNotNull('visit_visitor.checked_in_at'));
 
         if ($scope === RecurringVisitSeries::UPDATE_FUTURE) {
             $query->where('recurrence_occurrence_number', '>=', $selectedOccurrenceNumber);
@@ -340,11 +345,19 @@ class RecurringVisitService
 
     private function advanceOccurrenceStart(Carbon $start, RecurringVisitSeries $series, int $steps): Carbon
     {
-        for ($i = 0; $i < $steps; $i++) {
-            $start = $this->nextOccurrenceStart($start, $series);
-        }
+        // Fork: monthly and yearly steps are taken in one go from the start date, so a day that
+        // a shorter month lacks is not lost for the rest of the series.
+        return match ($series->frequency) {
+            RecurringVisitSeries::FREQUENCY_MONTHLY => $start->copy()->addMonthsNoOverflow($steps),
+            RecurringVisitSeries::FREQUENCY_YEARLY => $start->copy()->addYearsNoOverflow($steps),
+            default => (function () use ($start, $series, $steps): Carbon {
+                for ($i = 0; $i < $steps; $i++) {
+                    $start = $this->nextOccurrenceStart($start, $series);
+                }
 
-        return $start;
+                return $start;
+            })(),
+        };
     }
 
     private function previousOccurrenceStart(Carbon $start, RecurringVisitSeries $series, int $steps, string $frequency, ?int $intervalDays): Carbon
@@ -371,6 +384,8 @@ class RecurringVisitService
 
         $series->visits()
             ->where('recurrence_is_modified', false)
+            // Fork: never delete an occurrence with attendance.
+            ->whereDoesntHave('visitors', fn ($query) => $query->whereNotNull('visit_visitor.checked_in_at'))
             ->when($fromOccurrenceNumber !== null, fn ($query) => $query->where('recurrence_occurrence_number', '>=', $fromOccurrenceNumber))
             ->get()
             ->each(function (Visit $visit) use ($series): void {

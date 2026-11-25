@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -119,7 +120,7 @@ final class FacileOidcAuthenticator implements OidcAuthenticator
             issuer: $issuer,
             subject: $subject,
             email: is_string($email) ? Str::lower($email) : null,
-            emailVerified: (bool) Arr::get($claims, 'email_verified', false),
+            emailVerified: $this->emailVerified($claims),
             displayName: is_string($displayName) ? $displayName : null,
             groups: $this->groups($claims),
             claims: $this->minimizeClaims($claims),
@@ -283,6 +284,36 @@ final class FacileOidcAuthenticator implements OidcAuthenticator
     }
 
     /**
+     * Fork: whether any configured verification claim (sso.oidc.email_verified_claims, default
+     * email_verified; xms_edov for Microsoft Entra ID) is true. Only a real boolean true or the
+     * string "true" counts.
+     *
+     * @param  array<string, mixed>  $claims
+     */
+    private function emailVerified(array $claims): bool
+    {
+        foreach ($this->emailVerifiedClaims() as $claim) {
+            $value = Arr::get($claims, $claim);
+
+            if ($value === true || (is_string($value) && strtolower($value) === 'true')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function emailVerifiedClaims(): array
+    {
+        $claims = array_values(array_filter((array) config('sso.oidc.email_verified_claims', ['email_verified']), 'is_string'));
+
+        return $claims === [] ? ['email_verified'] : $claims;
+    }
+
+    /**
      * @param  array<string, mixed>  $claims
      * @return array<string, mixed>
      */
@@ -291,6 +322,7 @@ final class FacileOidcAuthenticator implements OidcAuthenticator
         $groupsClaim = (string) config('sso.oidc.groups_claim', 'groups');
 
         return Arr::only($claims, array_unique([
+            ...$this->emailVerifiedClaims(),
             'iss',
             'sub',
             'email',

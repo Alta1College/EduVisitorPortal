@@ -1,3 +1,5 @@
+{{-- Fork: Edu Visitor Portal badge icon (public/favicon.svg; PNG/ICO sizes rendered from it). --}}
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">

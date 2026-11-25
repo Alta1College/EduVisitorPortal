@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -314,7 +315,7 @@ class MfaTest extends TestCase
                 ->assertOk()
                 ->assertSee('data-testid="mfa-recovery-toggle"', false)
                 ->assertSee('<details', false)
-                ->assertSee('Recovery Code', false)
+                ->assertSee(__('Recovery Code'), false)
                 ->assertDontSee('Alternativ kannst du einen Recovery Code verwenden.')
                 ->assertDontSee('oder einem Recovery Code');
         }
@@ -1026,7 +1027,7 @@ class MfaTest extends TestCase
             ->actingAs($user)
             ->get(route('profile.security'))
             ->assertOk()
-            ->assertSee(__('Optionale Zwei-Faktor-Aktivierung über das Profil ist für dieses Konto nicht verfügbar.'))
+            ->assertSee(__('Dieses Konto wird über SSO verwaltet. Optionale Zwei-Faktor-Aktivierung über das Profil ist für dieses Konto nicht verfügbar.'))
             ->assertDontSee(__('Zwei-Faktor-Authentifizierung aktivieren'));
     }
 

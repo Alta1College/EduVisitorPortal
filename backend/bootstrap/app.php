@@ -2,12 +2,14 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 use App\Http\Middleware\ApplyUserPreferences;
 use App\Http\Middleware\EnsureRequiredMfaIsConfigured;
+use App\Http\Middleware\LogOutInactiveUsers;
 use App\Http\Middleware\NormalizeMfaCodeInputs;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -26,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
 
         $middleware->web(append: [
+            LogOutInactiveUsers::class, // Fork (Phase 11)
             ApplyUserPreferences::class,
             NormalizeMfaCodeInputs::class,
             SecurityHeaders::class,

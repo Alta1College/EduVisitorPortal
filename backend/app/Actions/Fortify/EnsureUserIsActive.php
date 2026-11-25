@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -33,7 +34,9 @@ class EnsureUserIsActive
             $this->limiter->increment($request);
 
             throw ValidationException::withMessages([
-                Fortify::username() => __('Dieses Benutzerkonto ist deaktiviert.'),
+                // Fork (Phase 11): the generic message, so a correct password for a deactivated
+                // account is not confirmed to whoever typed it.
+                Fortify::username() => __('auth.failed'),
             ]);
         }
 

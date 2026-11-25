@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -26,6 +27,19 @@ class DepartmentResource extends Resource
     protected static ?string $model = Department::class;
 
     protected static string|null|BackedEnum $navigationIcon = 'heroicon-o-building-office';
+
+    /**
+     * Fork: departments are hidden unless DEPARTMENTS_ENABLED (config visitorportal.departments).
+     */
+    public static function canAccess(): bool
+    {
+        return (bool) config('visitorportal.departments.enabled') && parent::canAccess();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return (bool) config('visitorportal.departments.enabled') && parent::shouldRegisterNavigation();
+    }
 
     public static function getNavigationLabel(): string
     {

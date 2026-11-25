@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Simon Grant
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# HTTPS for Edu Visitor Portal (docker-compose.caddy.yml). Caddy obtains and renews the
+# Let's Encrypt certificate for SITE_ADDRESS and forwards X-Forwarded-* headers to the app.
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	reverse_proxy app:80
+}
+
+# Server-only extra sites (docker/caddy/sites/README.md). No matching files is fine.
+import /etc/caddy/sites/*.caddy

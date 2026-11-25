@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -33,7 +34,7 @@ class SiteForm
                 TextInput::make('timezone')
                     ->label(__('Zeitzone'))
                     ->required()
-                    ->default('Europe/Berlin')
+                    ->default(fn (): string => (string) config('app.timezone'))
                     ->maxLength(255),
                 Toggle::make('is_active')
                     ->label(__('Aktiv'))

@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -172,7 +173,7 @@ class ReceptionAdministerVisitTest extends TestCase
                 ->assertDontSee(__('Offene Klärungen'));
 
             $this->assertMatchesRegularExpression(
-                '/Ausweise vorzubereiten.*?>1<.*?Nicht gedruckte Ausweise im Vorbereitungszeitraum/s',
+                '/'.preg_quote(__('Ausweise vorzubereiten'), '/').'.*?>1<.*?'.preg_quote(__('Nicht gedruckte Ausweise im Vorbereitungszeitraum'), '/').'/s',
                 $component->html()
             );
         } finally {

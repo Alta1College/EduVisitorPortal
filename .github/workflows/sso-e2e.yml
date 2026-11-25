@@ -15,6 +15,11 @@ permissions:
   actions: write
   contents: read
 
+# Fork: a new push to the same PR cancels the older run.
+concurrency:
+  group: sso-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   sso-e2e:
     runs-on: ubuntu-latest
@@ -22,6 +27,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Fork: the runner's ~14 GB free is not enough for the app, Keycloak and Gotenberg
+      # (LibreOffice) images; remove preinstalled toolchains this job never uses.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          docker system prune -af > /dev/null
+          df -h /
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -112,6 +112,9 @@ return [
         'decay_seconds' => (int) env('AUTH_LOGIN_DECAY_SECONDS', 60),
     ],
 
+    // Fork (Phase 11): minimum time for a failed local login (TimeboxLoginAttempt).
+    'login_minimum_failure_microseconds' => (int) env('AUTH_LOGIN_MIN_FAILURE_MICROSECONDS', 1_500_000),
+
     'password_reset_rate_limit' => [
         'max_attempts' => (int) env('AUTH_PASSWORD_RESET_MAX_ATTEMPTS', 6),
         'decay_seconds' => (int) env('AUTH_PASSWORD_RESET_DECAY_SECONDS', 60),

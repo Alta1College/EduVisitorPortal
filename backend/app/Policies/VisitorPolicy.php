@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -12,6 +13,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Visitor;
+use App\VisitLog\VisitLock;
 // use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -48,6 +50,11 @@ class VisitorPolicy
 
     public function delete(User $user, Visitor $visitor): bool
     {
+        // Fork: deleting would remove the visitor's attendance from the visitor log.
+        if (VisitLock::visitorHasAttendance((int) $visitor->getKey())) {
+            return false;
+        }
+
         return ($user->can('Delete:Visitor') || $user->can('DeleteAny:Visitor'))
             && Visitor::query()
                 ->visibleTo($user)

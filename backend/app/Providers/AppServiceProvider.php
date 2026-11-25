@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Events\TwoFactorAuthenticationFailed;
@@ -45,6 +47,19 @@ class AppServiceProvider extends ServiceProvider
             config(['livewire.temporary_file_upload.rules' => ['required', 'file', 'max:'.RasterImageUpload::maxSizeKilobytes()]]);
         }
 
+        // Fork (Phase 11): anonymous visitor pages can upload (photos); keep the temporary-upload
+        // endpoint to a rate that a real sign-in never reaches (Livewire's default is 60/minute).
+        if (config('livewire.temporary_file_upload.middleware') === null) {
+            config(['livewire.temporary_file_upload.middleware' => 'throttle:'.(int) config('upload.temporary_uploads_per_minute', 15).',1']);
+        }
+
+        // Fork (Phase 11): links in e-mails (password reset, sign-out) always use APP_URL, never
+        // a Host or X-Forwarded-Host header from the request.
+        if ($this->app->isProduction() && is_string(config('app.url')) && str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceRootUrl((string) config('app.url'));
+            URL::forceScheme('https');
+        }
+
         RateLimiter::for('password-reset', function (Request $request): Limit {
             $email = Str::lower((string) $request->input('email'));
             $key = ($email !== '' ? $email : 'anonymous').'|'.$request->ip();
@@ -55,12 +70,16 @@ class AppServiceProvider extends ServiceProvider
             )->by($key);
         });
 
-        RateLimiter::for('two-factor', function (Request $request): Limit {
+        RateLimiter::for('two-factor', function (Request $request): array {
             $loginId = (string) ($request->session()->get('login.id')
                 ?? $request->user()?->getAuthIdentifier()
                 ?? 'anonymous');
 
-            return Limit::perMinute(5)->by($loginId.'|'.$request->ip());
+            return [
+                Limit::perMinute(5)->by($loginId.'|'.$request->ip()),
+                // Fork (Phase 11): also per account, so changing IP does not give more guesses.
+                Limit::perMinutes(15, 10)->by('two-factor-account:'.$loginId),
+            ];
         });
 
         Queue::looping(function (): void {

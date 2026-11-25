@@ -27,10 +27,10 @@ if ! docker compose version >/dev/null 2>&1; then
     exit 1
 fi
 
-echo "[1/3] Pulling Besucherportal images..."
+echo "[1/3] Pulling Edu Visitor Portal images..."
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull || echo "Image pull failed. Continuing with locally available images if present."
 
-echo "[2/3] Starting Besucherportal..."
+echo "[2/3] Starting Edu Visitor Portal..."
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d
 
 echo "[3/3] Waiting for the portal to become reachable..."
@@ -53,7 +53,7 @@ done
 cat <<'EOF'
 
 +------------------------------------------------------------+
-| SUCCESS! Besucherportal is running.                         |
+| SUCCESS! Edu Visitor Portal is running.                    |
 |                                                            |
 | App:      http://localhost:8080                            |
 | Mailhog:  http://localhost:8025                            |

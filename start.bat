@@ -28,11 +28,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/3] Pulling Besucherportal images...
+echo [1/3] Pulling Edu Visitor Portal images...
 docker compose --env-file "%ENV_FILE%" -f "%COMPOSE_FILE%" pull
 if errorlevel 1 echo Image pull failed. Continuing with locally available images if present.
 
-echo [2/3] Starting Besucherportal...
+echo [2/3] Starting Edu Visitor Portal...
 docker compose --env-file "%ENV_FILE%" -f "%COMPOSE_FILE%" up -d
 if errorlevel 1 exit /b 1
 
@@ -46,7 +46,7 @@ if errorlevel 1 (
 
 echo.
 echo +------------------------------------------------------------+
-echo ^| SUCCESS! Besucherportal is running.                         ^|
+echo ^| SUCCESS! Edu Visitor Portal is running.                    ^|
 echo ^|                                                            ^|
 echo ^| App:      http://localhost:8080                            ^|
 echo ^| Mailhog:  http://localhost:8025                            ^|

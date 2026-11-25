@@ -21,7 +21,7 @@
     | {{__('Vorname')}}       | {{__('Nachname')}}      | {{__('Titel')}} |  {{__('Firma')}}         |
     | :-----------: | :-----------: | :----------:  | :----------:  |
     @foreach($visitors as $visitor)
-        | {{$visitor->first_name}} | {{$visitor->name}} | {{$visitor->title}} |{{$visitor->company}}
+        | {{ \App\Support\MarkdownText::escape($visitor->first_name) }} | {{ \App\Support\MarkdownText::escape($visitor->name) }} | {{ \App\Support\MarkdownText::escape($visitor->title) }} | {{ \App\Support\MarkdownText::escape($visitor->company) }} |
     @endforeach
 </x-mail::table>
 

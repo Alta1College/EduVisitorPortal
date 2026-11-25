@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -42,6 +43,18 @@ return [
     */
 
     'mailers' => [
+
+        // Fork: Microsoft 365 via Graph with OAuth client credentials (no mailbox password).
+        // See docs/fork/microsoft-graph-mail.md.
+        'microsoft-graph' => [
+            'transport' => 'microsoft-graph',
+            'tenant_id' => env('MICROSOFT_GRAPH_TENANT_ID'),
+            'client_id' => env('MICROSOFT_GRAPH_CLIENT_ID'),
+            'client_secret' => env('MICROSOFT_GRAPH_CLIENT_SECRET'),
+            'sender' => env('MICROSOFT_GRAPH_SENDER', env('MAIL_FROM_ADDRESS')),
+            'authority' => env('MICROSOFT_GRAPH_AUTHORITY', 'https://login.microsoftonline.com'),
+            'graph_endpoint' => env('MICROSOFT_GRAPH_ENDPOINT', 'https://graph.microsoft.com'),
+        ],
 
         'smtp' => [
             'transport' => 'smtp',

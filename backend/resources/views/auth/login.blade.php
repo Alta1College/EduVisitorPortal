@@ -71,7 +71,7 @@
                             required
                             autofocus
                             autocomplete="username"
-                            placeholder="max.mustermann@example.com"
+                            placeholder="{{ config('sso.login_email_placeholder', 'max.mustermann@example.com') }}"
                             class="input input-bordered h-12 w-full rounded-xl"
                         >
                         <x-input-error :messages="$errors->get('email')" class="mt-2" />

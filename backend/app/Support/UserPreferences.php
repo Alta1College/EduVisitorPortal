@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -110,6 +111,7 @@ class UserPreferences
             }
         }
 
-        return self::LOCALE_EN;
+        // Fork: fall back to the organisation's default locale (app.locale) instead of always English.
+        return self::normalizeLocale(config('app.locale')) ?? self::LOCALE_EN;
     }
 }

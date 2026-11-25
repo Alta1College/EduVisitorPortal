@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -18,6 +19,7 @@ class UserInfolist
         return $schema
             ->components([
                 TextEntry::make('department.name')
+                    ->visible(fn (): bool => (bool) config('visitorportal.departments.enabled')) // Fork
                     ->label(__('Abteilung'))
                     ->placeholder('-'),
                 TextEntry::make('first_name')

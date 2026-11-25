@@ -5,7 +5,6 @@
     $logoDarkPath = config('branding.logo_dark');
     $hasLogoLight = is_string($logoLightPath) && $logoLightPath !== '' && file_exists(public_path($logoLightPath));
     $hasLogoDark = is_string($logoDarkPath) && $logoDarkPath !== '' && file_exists(public_path($logoDarkPath));
-    $navBrandLabel = __('Visitor portal');
 
     $user = Auth::user();
     $userDisplayName = trim((string) ($user?->fullName ?? '')) ?: $user?->email;
@@ -24,7 +23,7 @@
 
         return $active
             ? $base . ' border-primary/20 bg-primary/10 text-primary hover:bg-primary/15'
-            : $base . ' border-transparent hover:bg-base-200 hover:text-base-content';
+            : $base . ' border-transparent hover:bg-base-100 hover:text-base-content';
     };
 
     $normalizedRoles = $roleNames
@@ -60,7 +59,7 @@
     }
 @endphp
 
-<div class="sticky top-0 z-30 border-b border-base-300/70 bg-base-100 [&_.btn]:min-h-11 lg:hidden">
+<div class="sticky top-0 z-30 border-b border-base-300/70 bg-base-200 [&_.btn]:min-h-11 lg:hidden">
     <div class="flex items-center justify-between px-4 py-4">
         <div class="flex min-w-0 items-center gap-3">
             <button
@@ -100,19 +99,21 @@
                     >
                 @endif
 
-                <p class="truncate text-sm font-semibold">{{ $navBrandLabel }}</p>
+                @unless ($hasLogoLight || $hasLogoDark)
+                    <p class="truncate text-sm font-semibold">{{ $brandName }}</p>
+                @endunless
             </div>
         </div>
     </div>
 </div>
 
-<aside id="sidebar" class="hidden w-72 border-r border-base-300/70 bg-base-100 [&_.btn]:min-h-11 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:flex-col lg:min-h-screen lg:px-4 lg:pt-4 lg:pb-4">
+<aside id="sidebar" class="hidden w-72 border-r border-base-300/70 bg-base-200 [&_.btn]:min-h-11 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:flex-col lg:min-h-screen lg:px-4 lg:pt-4 lg:pb-4">
     <div class="border-b border-base-300/70 px-4 py-4">
         <a href="{{ route('overview') }}" class="flex min-w-0 items-center gap-3" wire:navigate.hover>
             @if ($hasLogoLight)
                 <img
                     src="{{ asset($logoLightPath) }}"
-                    class="logo-light block h-10 w-auto max-w-[8.75rem] shrink-0 object-contain object-left"
+                    class="logo-light block h-12 w-auto max-w-[13rem] shrink-0 object-contain object-left"
                     alt="{{ $brandName }}"
                     width="120"
                     height="40"
@@ -124,7 +125,7 @@
             @if ($hasLogoDark)
                 <img
                     src="{{ asset($logoDarkPath) }}"
-                    class="logo-dark block h-10 w-auto max-w-[8.75rem] shrink-0 object-contain object-left"
+                    class="logo-dark block h-12 w-auto max-w-[13rem] shrink-0 object-contain object-left"
                     alt="{{ $brandName }}"
                     width="120"
                     height="40"
@@ -134,9 +135,13 @@
                 >
             @endif
 
+            @unless ($hasLogoLight || $hasLogoDark)
+
             <div class="min-w-0">
-                <h1 class="truncate text-base font-semibold tracking-tight">{{ $navBrandLabel }}</h1>
+                <h1 class="truncate text-base font-semibold tracking-tight">{{ $brandName }}</h1>
             </div>
+
+            @endunless
         </a>
     </div>
 
@@ -204,6 +209,24 @@
                         </svg>
                         <span>{{ __('Alle Besuche') }}</span>
                     </a>
+
+                    {{-- Fork (Phase 9): register and emergency roll call. --}}
+                    @can('Run:RollCall')
+                    <a href="{{ route('reception.on-site') }}" class="{{ $navLinkClasses(request()->routeIs('reception.on-site', 'reception.roll-calls.*')) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" />
+                        </svg>
+                        <span>{{ __('Jetzt auf dem Gelände') }}</span>
+                    </a>
+                    @endcan
+                    @can('Check:Credentials')
+                    <a href="{{ route('reception.credentials') }}" class="{{ $navLinkClasses(request()->routeIs('reception.credentials')) }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3m-3 3h3m-9 4.5h9M4.5 19.5h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003 6v12a1.5 1.5 0 001.5 1.5zM9 10.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                        </svg>
+                        <span>{{ __('Nachweise') }}</span>
+                    </a>
+                    @endcan
                 </div>
             @endif
 
@@ -292,7 +315,7 @@
     class="fixed inset-0 z-40 bg-base-content/20 lg:hidden"
     @click.self="navOpen = false"
 >
-    <div class="absolute inset-y-0 left-0 flex w-80 max-w-[88vw] flex-col border-r border-base-300/70 bg-base-100">
+    <div class="absolute inset-y-0 left-0 flex w-80 max-w-[88vw] flex-col border-r border-base-300/70 bg-base-200">
         <div class="flex items-center justify-between border-b border-base-300/70 px-5 py-4">
             <div class="flex min-w-0 items-center gap-3">
                 @if ($hasLogoLight)
@@ -319,7 +342,9 @@
                         fetchpriority="high"
                     >
                 @endif
-                <span class="truncate text-sm font-semibold">{{ $navBrandLabel }}</span>
+                @unless ($hasLogoLight || $hasLogoDark)
+                    <span class="truncate text-sm font-semibold">{{ $brandName }}</span>
+                @endunless
             </div>
 
             <button
@@ -347,6 +372,12 @@
                         <a href="{{ route('portal.check_in_out') }}" class="{{ $navLinkClasses(request()->routeIs('portal.check_in_out')) }}" wire:navigate.hover @click="navOpen = false">{{ __('Check-In/Out') }}</a>
                     @endcanany
                     <a href="{{ route('reception.all-visits') }}" class="{{ $navLinkClasses(request()->routeIs('reception.all-visits')) }}" wire:navigate.hover @click="navOpen = false">{{ __('Alle Besuche') }}</a>
+                    @can('Run:RollCall')
+                        <a href="{{ route('reception.on-site') }}" class="{{ $navLinkClasses(request()->routeIs('reception.on-site', 'reception.roll-calls.*')) }}" @click="navOpen = false">{{ __('Jetzt auf dem Gelände') }}</a>
+                    @endcan
+                    @can('Check:Credentials')
+                        <a href="{{ route('reception.credentials') }}" class="{{ $navLinkClasses(request()->routeIs('reception.credentials')) }}" @click="navOpen = false">{{ __('Nachweise') }}</a>
+                    @endcan
                 @endif
 
                 @if ($canSeeMonitor && $visibleMonitor)

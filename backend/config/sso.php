@@ -2,10 +2,10 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 $csv = static function (?string $value, string $default = ''): array {
     return array_values(array_filter(
         array_map('trim', explode(',', $value ?: $default)),
@@ -20,6 +20,9 @@ return [
 
     'auth_mode' => env('AUTH_MODE', 'local'),
 
+    // Fork: example address shown in the login form's e-mail field (e.g. first.last@school.example).
+    'login_email_placeholder' => env('LOGIN_EMAIL_PLACEHOLDER', 'max.mustermann@example.com'),
+
     'oidc' => [
         'display_name' => env('OIDC_DISPLAY_NAME', 'Company SSO'),
 
@@ -33,6 +36,9 @@ return [
         )),
 
         'require_verified_email' => env('OIDC_REQUIRE_VERIFIED_EMAIL', true),
+        // Fork: claims that mark the email as verified when true. Microsoft Entra ID sends
+        // xms_edov (an optional claim) instead of email_verified.
+        'email_verified_claims' => $csv(env('OIDC_EMAIL_VERIFIED_CLAIMS'), 'email_verified'),
         'allowed_domains' => $csv(env('OIDC_ALLOWED_DOMAINS')),
 
         'provisioning_mode' => env('OIDC_PROVISIONING_MODE', 'disabled'),

@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -102,7 +103,7 @@ class CheckInOutBoardTest extends TestCase
 
             Livewire::actingAs($user)
                 ->test(CheckInOutBoard::class)
-                ->assertSee('2 Treffer')
+                ->assertSee(trans_choice(':count Treffer|:count Treffer', 2, ['count' => 2]))
                 ->assertSee('Heutiger Besuch')
                 ->assertSee('Baldiger Besuch')
                 ->assertDontSee('Vergangener Besuch')
@@ -149,8 +150,10 @@ class CheckInOutBoardTest extends TestCase
 
             Livewire::actingAs($user)
                 ->test(CheckInOutBoard::class)
-                ->assertSee('Eincheckbare Termine bis zu 12 Stunden im Voraus')
-                ->assertSee('1 Treffer')
+                ->assertSee(__('Eincheckbare Termine bis zu :window im Voraus und aktive Check-outs.', [
+                    'window' => trans_choice(':count Stunde|:count Stunden', 12, ['count' => 12]),
+                ]))
+                ->assertSee(trans_choice(':count Treffer|:count Treffer', 1, ['count' => 1]))
                 ->assertSee('Configured Visible Visit')
                 ->assertDontSee('Configured Outside Visit')
                 ->call('checkIn', $outsideVisit->id, $outsideVisitor->id);
@@ -373,7 +376,7 @@ class CheckInOutBoardTest extends TestCase
             Livewire::actingAs($user)
                 ->test(CheckInOutBoard::class)
                 ->set('search', 'Clara')
-                ->assertSee('1 Treffer')
+                ->assertSee(trans_choice(':count Treffer|:count Treffer', 1, ['count' => 1]))
                 ->assertSee('Heutiger Clara Besuch')
                 ->assertSee('Clara Heute')
                 ->assertDontSee('Alter Clara Besuch')

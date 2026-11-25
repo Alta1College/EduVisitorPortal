@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -11,6 +12,7 @@ namespace App\Providers;
 use App\Actions\Fortify\EnsureLocalLoginIsAllowed;
 use App\Actions\Fortify\EnsureUserIsActive;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Actions\Fortify\TimeboxLoginAttempt;
 use App\Http\Controllers\Auth\PasswordResetLinkController as LocalPasswordResetLinkController;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\PasswordConfirmedResponse;
@@ -57,6 +59,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::authenticateThrough(fn (Request $request): array => array_filter([
             config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
             config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
+            TimeboxLoginAttempt::class, // Fork (Phase 11): no account enumeration by timing.
             EnsureUserIsActive::class,
             EnsureLocalLoginIsAllowed::class,
             Features::enabled(Features::twoFactorAuthentication()) ? RedirectsIfTwoFactorAuthenticatable::class : null,

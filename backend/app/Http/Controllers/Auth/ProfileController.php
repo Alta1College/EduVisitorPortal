@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -10,6 +11,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Notifications\HostNotificationChannels;
 use App\Support\AppMfaPolicy;
 use App\Support\RecoveryCodeManager;
 use App\Support\SecurityEventLogger;
@@ -128,8 +130,9 @@ class ProfileController extends Controller
     {
         $this->authorize('update', $request->user());
 
-        $request->user()->fill($request->validated());
+        $request->user()->fill($request->safe()->except(array_keys(HostNotificationChannels::rules())));
         $request->user()->save();
+        HostNotificationChannels::savePreferences($request->user(), $request); // Fork
 
         $locale = UserPreferences::normalizeLocale($request->input('locale'))
             ?? UserPreferences::normalizeLocale($request->user()->locale)

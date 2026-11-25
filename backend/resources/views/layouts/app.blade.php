@@ -57,6 +57,7 @@
 
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-brand-stylesheet />
     @if (config('visitorportal.easter_egg.enabled') && (! app()->environment('production') || config('visitorportal.easter_egg.show_in_production')))
         @vite('resources/js/easter-egg.ts')
     @endif
@@ -67,7 +68,7 @@
 
     <div class="min-w-0 lg:ml-72">
         @if (isset($header))
-            <header class="relative z-20 border-b border-base-300/70 bg-base-100 [&_.btn]:min-h-11">
+            <header class="relative z-20 border-b border-base-300/70 bg-base-200 [&_.btn]:min-h-11">
                 <div class="w-full max-w-none px-4 py-5 sm:px-6 lg:px-8">
                     {{ $header }}
                 </div>

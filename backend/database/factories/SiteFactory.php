@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -25,7 +26,7 @@ class SiteFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name).'-'.$this->faker->unique()->numberBetween(1000, 9999),
             'address' => $this->faker->address(),
-            'timezone' => 'Europe/Berlin',
+            'timezone' => (string) config('app.timezone'),
             'is_active' => true,
         ];
     }

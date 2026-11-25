@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -56,6 +57,7 @@ class UserForm
                     ->rules([new ActiveSites])
                     ->helperText(__('Der primäre Standort wird automatisch zugeordnet. Weitere zugeordnete Standorte bleiben beim Primärstandort-Wechsel erhalten.')),
                 Select::make('department_id')
+                    ->visible(fn (): bool => (bool) config('visitorportal.departments.enabled')) // Fork
                     ->label(__('Abteilung'))
                     ->options(fn (callable $get): array => Department::query()
                         ->where('site_id', $get('site_id') ?: Site::default()->id)

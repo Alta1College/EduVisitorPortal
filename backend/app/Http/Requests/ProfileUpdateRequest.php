@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -9,6 +10,7 @@
 namespace App\Http\Requests;
 
 use App\Models\User;
+use App\Notifications\HostNotificationChannels;
 use App\Support\UserPreferences;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -31,6 +33,7 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'locale' => ['sometimes', 'string', Rule::in(UserPreferences::supportedLocales())],
             'theme_preference' => ['sometimes', 'string', Rule::in(UserPreferences::supportedThemes())],
+            ...HostNotificationChannels::rules(), // Fork: notification channels
         ];
     }
 }

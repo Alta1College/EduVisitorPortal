@@ -1,6 +1,6 @@
 {
-    "name": "VisitorPortal",
-    "short_name": "VisitorPortal",
+    "name": "Edu Visitor Portal",
+    "short_name": "Visitors",
     "icons": [
         {
             "src": "/android-chrome-192x192.png",

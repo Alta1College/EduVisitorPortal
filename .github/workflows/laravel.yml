@@ -80,6 +80,13 @@ jobs:
       - name: PHP Pint Style Check
         run: ./vendor/bin/pint --test -v
 
+      # Fork: every PHP file keeps its GPL licence line (pint.json no longer enforces one fixed
+      # copyright header, since fork files carry their own SPDX copyright lines).
+      - name: Licence header check
+        run: |
+          missing=$(git ls-files 'app/*.php' 'config/*.php' 'database/*.php' 'routes/*.php' 'tests/*.php' | xargs grep -L "SPDX-License-Identifier: GPL-3.0-or-later" || true)
+          if [ -n "$missing" ]; then echo "Missing SPDX licence line:"; echo "$missing"; exit 1; fi
+
       - name: Generate key
         run: php artisan key:generate
 

@@ -2,46 +2,66 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace App\Services;
 
+use App\Audit\AuditLogger;
 use App\Enums\VisitStatusEnum;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Visitor;
 use App\Notifications\Host\GuestCheckedInDatabaseNotification;
 use App\Notifications\Host\GuestCheckedInMailNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class VisitActionService
 {
-    public function checkInParticipant(Visit $visit, Visitor $visitor, User $actionBy): Visitor
+    /**
+     * @param  User|null  $actionBy  null when the visitor checks in themselves (fork: public channel)
+     */
+    public function checkInParticipant(Visit $visit, Visitor $visitor, ?User $actionBy): Visitor
     {
         $this->ensureVisitCanBeOperated($visit);
+        $this->resolveParticipant($visit, $visitor);
 
-        $participant = $this->resolveParticipant($visit, $visitor);
-        $pivot = $participant->pivot;
-        $didCheckIn = false;
+        // Fork: the attendance row is locked while it is read and changed, so two staff (or a
+        // retried request) acting at once cannot both check the visitor in.
+        $didCheckIn = DB::transaction(function () use ($visit, $visitor, $actionBy): bool {
+            $pivot = $this->lockedAttendance($visit, $visitor);
 
-        if (blank($pivot->checked_in_at) || filled($pivot->checked_out_at)) {
+            if ($pivot === null || (filled($pivot->checked_in_at) && blank($pivot->checked_out_at))) {
+                return false;
+            }
+
             $payload = [
                 'checked_in_at' => now(),
-                'checked_in_by_user_id' => $actionBy->id,
+                'checked_in_by_user_id' => $actionBy?->id,
                 'updated_at' => now(),
             ];
 
             if (filled($pivot->checked_out_at)) {
+                // Fork: back again on the same visit. The earlier period is kept in the
+                // append-only audit log before the row is reopened.
+                app(AuditLogger::class)->record('visit.attendance.reopened', subject: $visit, site: $visit->site_id, context: [
+                    'visitor_id' => $visitor->getKey(),
+                    'previous_checked_in_at' => (string) $pivot->checked_in_at,
+                    'previous_checked_out_at' => (string) $pivot->checked_out_at,
+                ], actorUserId: $actionBy?->id);
+
                 $payload['checked_out_at'] = null;
                 $payload['checked_out_by_user_id'] = null;
             }
 
             $visit->visitors()->updateExistingPivot($visitor->id, $payload);
-            $didCheckIn = true;
-        }
+
+            return true;
+        });
 
         $participant = $this->resolveParticipant($visit, $visitor);
 
@@ -52,19 +72,25 @@ class VisitActionService
         return $participant;
     }
 
-    public function checkOutParticipant(Visit $visit, Visitor $visitor, User $actionBy): Visitor
+    /**
+     * @param  User|null  $actionBy  null when the visitor signs out themselves (fork: public channel)
+     */
+    public function checkOutParticipant(Visit $visit, Visitor $visitor, ?User $actionBy): Visitor
     {
         $this->ensureVisitCanBeOperated($visit);
+        $this->resolveParticipant($visit, $visitor);
 
-        $participant = $this->resolveParticipant($visit, $visitor);
+        DB::transaction(function () use ($visit, $visitor, $actionBy): void {
+            $pivot = $this->lockedAttendance($visit, $visitor);
 
-        if (filled($participant->pivot->checked_in_at) && blank($participant->pivot->checked_out_at)) {
-            $visit->visitors()->updateExistingPivot($visitor->id, [
-                'checked_out_at' => now(),
-                'checked_out_by_user_id' => $actionBy->id,
-                'updated_at' => now(),
-            ]);
-        }
+            if ($pivot !== null && filled($pivot->checked_in_at) && blank($pivot->checked_out_at)) {
+                $visit->visitors()->updateExistingPivot($visitor->id, [
+                    'checked_out_at' => now(),
+                    'checked_out_by_user_id' => $actionBy?->id,
+                    'updated_at' => now(),
+                ]);
+            }
+        });
 
         return $this->resolveParticipant($visit, $visitor);
     }
@@ -100,6 +126,18 @@ class VisitActionService
         }
 
         return $this->resolveParticipant($visit, $visitor);
+    }
+
+    /**
+     * Fork: the attendance row, locked for the rest of the transaction.
+     */
+    private function lockedAttendance(Visit $visit, Visitor $visitor): ?object
+    {
+        return DB::table('visit_visitor')
+            ->where('visit_id', $visit->getKey())
+            ->where('visitor_id', $visitor->getKey())
+            ->lockForUpdate()
+            ->first(['checked_in_at', 'checked_out_at']);
     }
 
     private function resolveParticipant(Visit $visit, Visitor $visitor): Visitor

@@ -4,6 +4,8 @@ FROM php:8.4.27-apache AS php-base
 
 RUN a2enmod rewrite headers \
     && apt-get update \
+    # Fork: apply Debian security updates (the pinned base tag can lag, e.g. Apache fixes).
+    && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \

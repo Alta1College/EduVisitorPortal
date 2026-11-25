@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -13,8 +14,10 @@ use App\Enums\GenderEnum;
 use App\Support\AppMfaPolicy;
 use App\Support\RecoveryCodeManager;
 use App\Support\SafeLogContext;
+use App\Support\UserSessions;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,7 +32,7 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasName
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, TwoFactorAuthenticatable;
@@ -146,6 +149,11 @@ class User extends Authenticatable implements FilamentUser
 
         static::saved(function (self $user): void {
             $user->syncPrimarySiteAssignment();
+
+            // Fork (Phase 11): deactivation ends the account's sessions and "remember me" cookie.
+            if ($user->wasChanged('is_active') && ! $user->is_active) {
+                UserSessions::endAllFor($user);
+            }
         });
     }
 
@@ -263,6 +271,14 @@ class User extends Authenticatable implements FilamentUser
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn (mixed $value, array $attributes) => $attributes['first_name'].' '.$attributes['name'], );
+            get: fn (mixed $value, array $attributes) => trim(($attributes['first_name'] ?? '').' '.($attributes['name'] ?? '')), );
+    }
+
+    /**
+     * Fork: the admin panel shows the full name ("first_name name"), not only the surname column.
+     */
+    public function getFilamentName(): string
+    {
+        return $this->full_name !== '' ? $this->full_name : (string) $this->email;
     }
 }

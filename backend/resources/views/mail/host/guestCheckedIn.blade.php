@@ -6,10 +6,11 @@
 
 {{__('soeben ist folgender Besucher bei uns eingetroffen')}}:
 
+{{-- Fork (Phase 11): visitor-typed text is Markdown-escaped (no injected links or table breaks). --}}
 <x-mail::table>
     | {{__('Vorname')}}       | {{__('Nachname')}}      | {{__('Titel')}} |  {{__('Firma')}}         |
     | :-----------: | :-----------: | :----------:  | :----------:  |
-    | {{$visitor->first_name}} | {{$visitor->name}} | {{$visitor->title}} |{{$visitor->company}}
+    |{{ \App\Support\MarkdownText::escape($visitor->first_name) }} | {{ \App\Support\MarkdownText::escape($visitor->name) }} | {{ \App\Support\MarkdownText::escape($visitor->title) }} | {{ \App\Support\MarkdownText::escape($visitor->company) }} |
 </x-mail::table>
 
 <x-mail::button :url='route("overview")'>

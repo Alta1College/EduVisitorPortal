@@ -27,6 +27,8 @@
             </div>
 
             <div class="flex flex-col gap-3 border-t border-base-300 pt-5 sm:flex-row">
+                <x-recovery-codes-download :codes="$recoveryCodes" />
+
                 <form method="POST" action="{{ route('security.mfa.continue') }}">
                     @csrf
                     <button type="submit" class="btn btn-primary rounded-2xl">

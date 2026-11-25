@@ -40,12 +40,16 @@
                     </p>
                 </div>
 
-                <form method="POST" action="{{ route('profile.security.recovery-codes.regenerate') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-outline rounded-2xl">
-                        {{ __('Neue Codes erzeugen') }}
-                    </button>
-                </form>
+                <div class="flex flex-wrap gap-3">
+                    <x-recovery-codes-download :codes="$recoveryCodes" />
+
+                    <form method="POST" action="{{ route('profile.security.recovery-codes.regenerate') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline rounded-2xl">
+                            {{ __('Neue Codes erzeugen') }}
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">

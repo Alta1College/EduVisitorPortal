@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -19,6 +20,14 @@ use Tests\TestCase;
 class AdminAdministerDepartmentTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Fork: departments are hidden unless DEPARTMENTS_ENABLED; these tests cover them switched on.
+        config(['visitorportal.departments.enabled' => true]);
+    }
 
     /**
      * Feature test for admin administering departments (CRUD))

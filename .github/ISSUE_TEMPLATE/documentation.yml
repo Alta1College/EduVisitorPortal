@@ -8,7 +8,7 @@ body:
     attributes:
       label: Documentation location
       description: Which document, section, or page is affected?
-      placeholder: "Example: README.md, README.de.md, docs/operations.md, backend/.env.production.example"
+      placeholder: "Example: README.md, docs/operations.md, backend/.env.production.example"
     validations:
       required: true
 

@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -297,7 +298,8 @@ class AdminAdministerVisitsTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_delete_visits(): void
+    // Fork (immutable visitor log): the admin panel cancels visits instead of deleting them.
+    public function test_admin_cancels_instead_of_deleting_visits(): void
     {
 
         $admin = (new PermissionHelper)->getSuperAdminUser();
@@ -356,22 +358,19 @@ class AdminAdministerVisitsTest extends TestCase
             ]);
         }
 
-        // delete the visit
+        // no delete action; cancel instead
         Livewire::actingAs($admin)
             ->test(EditVisit::class, ['record' => $visit->id])
             ->assertOk()
-            ->callAction('delete')
+            ->assertActionDoesNotExist('delete')
+            ->callAction('cancel')
             ->assertHasNoFormErrors();
 
-        // check if visit is missing in db
-        $this->assertDatabaseMissing('visits', [
-            'host_user_id' => $employee->id,
-            'title' => 'Test Title',
-            'substitute_user_id' => $substituteUser->id,
-            'status' => VisitStatusEnum::Planned->value,
-            'notes' => 'Test Visit',
-            'canceled_at' => null,
-            'canceled_by_user_id' => null,
+        // the visit stays in the log, cancelled
+        $this->assertDatabaseHas('visits', [
+            'id' => $visit->id,
+            'status' => VisitStatusEnum::Canceled->value,
+            'canceled_by_user_id' => $admin->id,
         ]);
     }
 

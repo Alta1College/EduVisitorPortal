@@ -40,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/p0etinc0de/besucherportal
+          images: ghcr.io/alta1college/eduvisitorportal
           flavor: |
             latest=false
           tags: |
@@ -66,7 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
-          PACKAGE_DIR="dist/VisitorPortal-demo-${TAG}"
+          PACKAGE_DIR="dist/EduVisitorPortal-demo-${TAG}"
           mkdir -p "$PACKAGE_DIR"
 
           cp docker-compose.demo.yml "$PACKAGE_DIR/"
@@ -80,7 +80,7 @@ jobs:
           EOF
 
           cd dist
-          zip -r "VisitorPortal-demo-${TAG}.zip" "VisitorPortal-demo-${TAG}"
+          zip -r "EduVisitorPortal-demo-${TAG}.zip" "EduVisitorPortal-demo-${TAG}"
 
       - name: Create source release package
         if: startsWith(github.ref, 'refs/tags/')
@@ -96,7 +96,7 @@ jobs:
 
           (
             cd dist/source
-            zip -qr "../besucherportal-${TAG}.zip" .
+            zip -qr "../eduvisitorportal-${TAG}.zip" .
           )
 
           rm -rf dist/source
@@ -108,8 +108,8 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME}"
-          DEMO="dist/VisitorPortal-demo-${TAG}.zip"
-          SOURCE="dist/besucherportal-${TAG}.zip"
+          DEMO="dist/EduVisitorPortal-demo-${TAG}.zip"
+          SOURCE="dist/eduvisitorportal-${TAG}.zip"
 
           test -s "$DEMO"
           test -s "$SOURCE"
@@ -118,5 +118,5 @@ jobs:
           gh release create "$TAG" "$DEMO" "$SOURCE" \
             --verify-tag \
             --draft \
-            --title "VisitorPortal ${TAG}" \
+            --title "Edu Visitor Portal ${TAG}" \
             --notes-file "docs/releases/${TAG}.md"

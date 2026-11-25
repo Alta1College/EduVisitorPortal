@@ -6,4 +6,4 @@ docker compose --env-file "%ENV_FILE%" -f docker-compose.demo.yml pull
 if errorlevel 1 exit /b 1
 docker compose --env-file "%ENV_FILE%" -f docker-compose.demo.yml up -d
 if errorlevel 1 exit /b 1
-echo Besucherportal updated. Open http://localhost:8080
+echo Edu Visitor Portal updated. Open http://localhost:8080

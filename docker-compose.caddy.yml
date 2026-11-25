@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2026 Simon Grant
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Optional HTTPS front end for docker-compose.prod.yml: Caddy with automatic Let's Encrypt
+# certificates (docs/fork/phase-10-entra-hosts-and-deployment.md). The app's own port is no
+# longer published, so only Caddy (80/443) is reachable.
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.caddy.yml up -d
+#
+# Needs SITE_ADDRESS (e.g. visitors.example.org) in .env, a DNS record pointing at this host,
+# and inbound 80/443 open for the certificate check. Set TRUSTED_PROXIES=* in .env: the app is
+# then only reachable through Caddy on the internal container network.
+
+services:
+  app:
+    ports: !reset []
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: "${SITE_ADDRESS:?SITE_ADDRESS is required (e.g. visitors.example.org)}"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./docker/caddy/sites:/etc/caddy/sites:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

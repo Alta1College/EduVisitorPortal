@@ -14,6 +14,13 @@
             </div>
         </section>
 
+        {{-- Fork: notification channels (docs/fork/teams-notifications.md) --}}
+        <section class="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+            <div class="max-w-3xl">
+                @include('profile.partials.update-notification-preferences-form')
+            </div>
+        </section>
+
         @if ($user->local_login_allowed === false)
             <section class="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
                 <div class="max-w-3xl">

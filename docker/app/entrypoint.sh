@@ -93,6 +93,13 @@ ensure_application_key() {
 cache_runtime_configuration() {
     php artisan config:clear >/dev/null 2>&1 || true
     php artisan config:cache
+
+    # Fork: in production also cache routes and events (faster requests; the code is fixed in
+    # the image, so a restart after each deploy refreshes them).
+    if [ "${APP_ENV:-}" = "production" ]; then
+        php artisan route:cache
+        php artisan event:cache
+    fi
 }
 
 cd "$APP_DIR"

@@ -15,9 +15,9 @@ This guide describes a production bootstrap without demo users or demo seed data
 
 ## Choose The Right Artifact
 
-- For a quick demo, use `VisitorPortal-demo-vX.Y.Z.zip`.
-- For production Docker deployments, use a fixed container image tag such as `ghcr.io/p0etinc0de/besucherportal:vX.Y.Z` with `docker-compose.prod.yml`.
-- For source-based deployments, clone the repository or use `besucherportal-vX.Y.Z.zip`.
+- For a quick demo, use `EduVisitorPortal-demo-vX.Y.Z.zip`.
+- For production Docker deployments, use a fixed container image tag such as `ghcr.io/alta1college/eduvisitorportal:vX.Y.Z` with `docker-compose.prod.yml`.
+- For source-based deployments, clone the repository or use `eduvisitorportal-vX.Y.Z.zip`.
 
 See [Release Artifacts](release-artifacts.md) for details.
 
@@ -256,7 +256,7 @@ The following commands use the supplied `docker-compose.prod.yml` and service na
 After recording the old image reference and backing up the original configuration, change only `VISITORPORTAL_IMAGE` in the existing production `.env`. For v0.9.1:
 
 ```env
-VISITORPORTAL_IMAGE=ghcr.io/p0etinc0de/besucherportal:v0.9.1
+VISITORPORTAL_IMAGE=ghcr.io/alta1college/eduvisitorportal:v0.9.1
 ```
 
 Pull the application image before entering maintenance mode; the running containers still use the previous image:

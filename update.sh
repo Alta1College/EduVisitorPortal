@@ -10,4 +10,4 @@ fi
 
 docker compose --env-file "$ENV_FILE" -f docker-compose.demo.yml pull
 docker compose --env-file "$ENV_FILE" -f docker-compose.demo.yml up -d
-echo "Besucherportal updated. Open http://localhost:8080"
+echo "Edu Visitor Portal updated. Open http://localhost:8080"

@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -12,6 +13,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Visit;
+use App\VisitLog\VisitLock;
 // use Illuminate\Foundation\Auth\User as AuthUser;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -36,6 +38,11 @@ class VisitPolicy
 
     public function update(User $user, Visit $visit): bool
     {
+        // Fork: a visit with attendance is part of the visitor log and is view-only for everyone.
+        if (VisitLock::hasAttendance($visit)) {
+            return false;
+        }
+
         if ($this->editAny($user)) {
             return true;
         }
@@ -49,6 +56,11 @@ class VisitPolicy
 
     public function delete(User $user, Visit $visit): bool
     {
+        // Fork: only the retention purge removes visits with attendance.
+        if (VisitLock::hasAttendance($visit)) {
+            return false;
+        }
+
         if ($this->deleteAny($user)) {
             return true;
         }
@@ -62,6 +74,11 @@ class VisitPolicy
 
     public function cancel(User $user, Visit $visit): bool
     {
+        // Fork: a visit that took place cannot be turned into a cancelled one.
+        if (VisitLock::hasAttendance($visit)) {
+            return false;
+        }
+
         if ($this->deleteAny($user) || $user->can('CancelAny:Visit')) {
             return true;
         }
@@ -76,6 +93,18 @@ class VisitPolicy
             || $this->deleteSite($user, $visit)
             || $this->deleteDepartment($user, $visit)
             || $this->deleteOwn($user, $visit);
+    }
+
+    /**
+     * Fork: append a note (the only change left on a visit with attendance). Whoever could edit
+     * the visit apart from the attendance lock may add a note.
+     */
+    public function addNote(User $user, Visit $visit): bool
+    {
+        return $this->editAny($user)
+            || $this->editSite($user, $visit)
+            || $this->editDepartment($user, $visit)
+            || $this->editOwn($user, $visit);
     }
 
     public function deleteAny(User $user): bool

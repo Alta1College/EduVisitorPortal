@@ -28,7 +28,8 @@ Application:
 - `APP_DEBUG`: must be `false` in production.
 - `APP_KEY`: required secret; generate once and keep it stable.
 - `APP_URL`: canonical external URL, including HTTPS in production.
-- `APP_LOCALE`, `APP_FALLBACK_LOCALE`: UI locale defaults.
+- `APP_LOCALE`, `APP_FALLBACK_LOCALE`: UI locale defaults (both `en` unless set).
+- `APP_TIMEZONE`: install timezone, `UTC` unless set. Set it for your region before the first start (for example `Australia/Perth`); changing it later shifts stored times.
 
 Database:
 
@@ -68,6 +69,8 @@ APP_MFA_SESSION_TTL_MINUTES=720
 ```
 
 `APP_MFA_REQUIRED_FOR_ADMIN_PANEL_AUTH_METHODS` requires an App-MFA-confirmed session for `/admin`. It does not prompt again if App-MFA was already confirmed in the current web session. The value `sso` means VisitorPortal also requires local App-MFA after SSO login before privileged admin-panel access.
+
+`APP_MFA_REQUIRED_ROLES=*` (fork) requires MFA for every user, whatever their role. Combine it with `APP_MFA_REQUIRED_FOR_AUTH_METHODS=local` and `APP_MFA_REQUIRED_FOR_ADMIN_PANEL_AUTH_METHODS=local` to require MFA for every password sign-in but never after SSO (for example when Microsoft Entra Conditional Access already enforces MFA).
 
 `MFA_ENABLED=false` disables role-based enforcement, but users with already configured MFA are still challenged during login.
 

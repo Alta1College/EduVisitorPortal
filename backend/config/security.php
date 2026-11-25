@@ -5,7 +5,6 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 $csv = static function (?string $value, string $default): array {
     $raw = $value ?? $default;
 

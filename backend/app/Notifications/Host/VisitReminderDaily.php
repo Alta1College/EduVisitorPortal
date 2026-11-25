@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -11,6 +12,9 @@ namespace App\Notifications\Host;
 use App\Mail\Host\VisitReminderDailyMail;
 use App\Models\User;
 use App\Models\Visit;
+use App\Notifications\HostNotificationChannels;
+use App\Teams\HostActivities;
+use App\Teams\TeamsActivity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -40,7 +44,7 @@ class VisitReminderDaily extends Notification implements ShouldQueue
      */
     public function via(User $notifiable): array
     {
-        return ['mail'];
+        return HostNotificationChannels::for($notifiable); // Fork: e-mail and/or Teams
     }
 
     /**
@@ -56,6 +60,14 @@ class VisitReminderDaily extends Notification implements ShouldQueue
 
         return (new VisitReminderDailyMail($this->visitCollection, $this->visitorCollection, $notifiable))
             ->to($notifiable->email);
+    }
+
+    /**
+     * Fork: the Teams activity-feed alert (App\Teams\TeamsActivityChannel).
+     */
+    public function toTeams(User $notifiable): TeamsActivity
+    {
+        return HostActivities::visitReminder($notifiable, $this->visitCollection);
     }
 
     /**

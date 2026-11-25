@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -18,6 +19,7 @@ use App\Models\Site;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Visitor;
+use App\Notifications\VisitCreatedNotifier;
 use App\Services\RecurringVisitService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +43,7 @@ class VisitController extends Controller
         $payload = $request->validated();
 
         $visit = app(RecurringVisitService::class)->createFromPayload($payload, $request->user());
+        VisitCreatedNotifier::notify($visit, $request->user()); // Fork: tell the host (e-mail/Teams)
 
         // Technical log for the current implementation. Visit lifecycle changes may later
         // also be written to a dedicated activity log.

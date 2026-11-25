@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -12,6 +13,9 @@ use App\Mail\Host\GuestCheckedInMail;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Visitor;
+use App\Notifications\HostNotificationChannels;
+use App\Teams\HostActivities;
+use App\Teams\TeamsActivity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -39,7 +43,7 @@ class GuestCheckedInMailNotification extends Notification implements ShouldQueue
      */
     public function via(User $notifiable): array
     {
-        return ['mail'];
+        return HostNotificationChannels::for($notifiable); // Fork: e-mail and/or Teams
     }
 
     /**
@@ -55,6 +59,14 @@ class GuestCheckedInMailNotification extends Notification implements ShouldQueue
         ]);
 
         return (new GuestCheckedInMail($notifiable, $this->visitor))->to($notifiable->email);
+    }
+
+    /**
+     * Fork: the Teams activity-feed alert (App\Teams\TeamsActivityChannel).
+     */
+    public function toTeams(User $notifiable): TeamsActivity
+    {
+        return HostActivities::visitorArrived($notifiable, $this->visit, $this->visitor);
     }
 
     /**

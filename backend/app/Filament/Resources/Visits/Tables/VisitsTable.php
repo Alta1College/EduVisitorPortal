@@ -2,15 +2,16 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 namespace App\Filament\Resources\Visits\Tables;
 
+use App\VisitLog\Filament\VisitLogActions;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -77,7 +78,8 @@ class VisitsTable
             ->toolbarActions([
                 CreateAction::make(),
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    // Fork: cancel instead of delete (immutable visitor log).
+                    VisitLogActions::cancelSelected(),
                 ]),
             ]);
     }

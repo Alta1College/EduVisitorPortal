@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -163,6 +164,10 @@ class VisitorPortalPermissions
             'RestoreAny:MonitorSlide',
             'View:UserPermissions',
         ]));
+
+        // Fork: organisation settings and audit permissions (see docs/fork/upstream-patches.md).
+        $adminPermissions = self::unique(array_merge($adminPermissions, ForkPermissions::ADMIN));
+        $receptionistPermissions = self::unique(array_merge($receptionistPermissions, ForkPermissions::RECEPTIONIST));
 
         return [
             'admin' => $adminPermissions,

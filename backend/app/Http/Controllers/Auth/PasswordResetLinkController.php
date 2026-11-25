@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -14,8 +15,8 @@ use Illuminate\Contracts\Auth\PasswordBroker;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Contracts\RequestPasswordResetLinkViewResponse;
 use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Fortify;
@@ -42,22 +43,29 @@ class PasswordResetLinkController extends Controller
             ]);
         }
 
-        $user = User::query()->where('email', Str::lower((string) $request->input(Fortify::email())))->first();
+        // Fork (Phase 11): the response is always the same "link sent" message, whether or not the
+        // address has an account, is SSO-only or was asked for recently, so this form cannot be
+        // used to find staff addresses. Requests are also rate-limited per address and IP.
+        $email = Str::lower((string) $request->input(Fortify::email()));
+        $sent = app(SuccessfulPasswordResetLinkRequestResponse::class, ['status' => Password::RESET_LINK_SENT]);
+        $throttleKey = 'password-reset-link:'.sha1($email).'|'.$request->ip();
+        $maxAttempts = max(1, (int) config('auth.password_reset_rate_limit.max_attempts', 6));
 
-        if ($user && $user->local_login_allowed === false) {
-            return app(SuccessfulPasswordResetLinkRequestResponse::class, ['status' => Password::RESET_LINK_SENT]);
+        if (RateLimiter::tooManyAttempts($throttleKey, $maxAttempts)) {
+            return $sent;
         }
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = $this->broker()->sendResetLink(
-            $request->only(Fortify::email())
-        );
+        RateLimiter::hit($throttleKey, max(1, (int) config('auth.password_reset_rate_limit.decay_seconds', 60)));
 
-        return $status == Password::RESET_LINK_SENT
-            ? app(SuccessfulPasswordResetLinkRequestResponse::class, ['status' => $status])
-            : app(FailedPasswordResetLinkRequestResponse::class, ['status' => $status]);
+        $user = User::query()->where('email', $email)->first();
+
+        if ($user === null || $user->local_login_allowed === false) {
+            return $sent;
+        }
+
+        $this->broker()->sendResetLink($request->only(Fortify::email()));
+
+        return $sent;
     }
 
     /**

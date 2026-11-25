@@ -61,3 +61,6 @@ auth.json
 *.iml
 *Zone.Identifier
 *.phar
+
+# Server-only Caddy sites (docker/caddy/sites/README.md)
+docker/caddy/sites/*.caddy

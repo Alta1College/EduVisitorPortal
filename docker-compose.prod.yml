@@ -3,13 +3,13 @@ name: visitorportal-prod
 x-app-image: &app-image "${VISITORPORTAL_IMAGE:?VISITORPORTAL_IMAGE is required}"
 
 x-app-environment: &app-environment
-  APP_NAME: "${APP_NAME:-VisitorPortal}"
+  APP_NAME: "${APP_NAME:-Edu Visitor Portal}"
   APP_ENV: production
   APP_DEBUG: "false"
   APP_KEY: "${APP_KEY:?APP_KEY is required}"
   APP_URL: "${APP_URL:?APP_URL is required}"
-  APP_TIMEZONE: "${APP_TIMEZONE:-Europe/Berlin}"
-  APP_LOCALE: "${APP_LOCALE:-de}"
+  APP_TIMEZONE: "${APP_TIMEZONE:-UTC}"
+  APP_LOCALE: "${APP_LOCALE:-en}"
   APP_FALLBACK_LOCALE: "${APP_FALLBACK_LOCALE:-en}"
   LOG_CHANNEL: "${LOG_CHANNEL:-stderr}"
   AUTH_LOGIN_MAX_ATTEMPTS: "${AUTH_LOGIN_MAX_ATTEMPTS:-5}"
@@ -66,9 +66,10 @@ x-app-environment: &app-environment
   HEALTH_HEARTBEAT_TTL: "${HEALTH_HEARTBEAT_TTL:-600}"
   BROADCAST_CONNECTION: log
   FILESYSTEM_DISK: local
-  MAIL_MAILER: smtp
-  MAIL_HOST: "${MAIL_HOST:?MAIL_HOST is required}"
-  MAIL_PORT: "${MAIL_PORT:?MAIL_PORT is required}"
+  # Fork: smtp, or microsoft-graph (MICROSOFT_GRAPH_* in app.env, docs/fork/microsoft-graph-mail.md).
+  MAIL_MAILER: "${MAIL_MAILER:-smtp}"
+  MAIL_HOST: "${MAIL_HOST:-}"
+  MAIL_PORT: "${MAIL_PORT:-587}"
   MAIL_USERNAME: "${MAIL_USERNAME:-}"
   MAIL_PASSWORD: "${MAIL_PASSWORD:-}"
   MAIL_ENCRYPTION: "${MAIL_ENCRYPTION:-tls}"
@@ -96,6 +97,9 @@ services:
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:80"
+    env_file:
+      - path: app.env
+        required: false
     environment:
       <<: *app-environment
       RUN_SETUP: "true"
@@ -117,6 +121,9 @@ services:
     image: *app-image
     restart: unless-stopped
     command: php artisan queue:work --sleep=3 --tries=3 --timeout=120 --max-time=3600 --max-jobs=1000 --memory=128
+    env_file:
+      - path: app.env
+        required: false
     environment:
       <<: *app-environment
       RUN_SETUP: "false"
@@ -138,6 +145,9 @@ services:
     image: *app-image
     restart: unless-stopped
     command: php artisan schedule:work
+    env_file:
+      - path: app.env
+        required: false
     environment:
       <<: *app-environment
       RUN_SETUP: "false"

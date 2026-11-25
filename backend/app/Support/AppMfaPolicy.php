@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -42,7 +43,11 @@ final class AppMfaPolicy
 
     private function isEnabledForRequiredRole(User $user): bool
     {
+        $roles = config('security.mfa.app_required_roles', ['admin', 'super_admin']);
+
+        // Fork: "*" requires MFA for every user, whatever their role (the auth-method settings
+        // still decide which sign-ins need it, e.g. password sign-in but not SSO).
         return (bool) config('security.mfa.enabled')
-            && $user->hasAnyRole(config('security.mfa.app_required_roles', ['admin', 'super_admin']));
+            && (in_array('*', $roles, true) || $user->hasAnyRole($roles));
     }
 }

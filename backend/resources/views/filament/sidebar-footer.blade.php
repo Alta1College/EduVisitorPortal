@@ -166,7 +166,7 @@
 
     <!-- User information box -->
     <div class="custom-sb-box">
-        <div class="custom-sb-name">{{ auth()->user()->name }}</div>
+        <div class="custom-sb-name">{{ auth()->user()->getFilamentName() }}</div>
         <div class="custom-sb-email" title="{{ auth()->user()->email }}">{{ auth()->user()->email }}</div>
     </div>
 

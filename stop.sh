@@ -9,4 +9,4 @@ if [ ! -f "$ENV_FILE" ] && [ -f "$ENV_EXAMPLE" ]; then
 fi
 
 docker compose --env-file "$ENV_FILE" -f docker-compose.demo.yml down
-echo "Besucherportal stopped. Data is still stored in Docker volumes."
+echo "Edu Visitor Portal stopped. Data is still stored in Docker volumes."

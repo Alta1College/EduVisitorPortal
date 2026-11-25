@@ -2,6 +2,7 @@
 
 /**
  * SPDX-FileCopyrightText: 2026 Jonathan Läpple and VisitorPortal contributors
+ * SPDX-FileCopyrightText: 2026 Simon Grant
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
@@ -11,7 +12,6 @@ use App\Filament\Resources\Monitors\MonitorResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Resources\Visitors\VisitorResource;
 use App\Filament\Resources\Visits\VisitResource;
-use App\Filament\Widgets\GithubLinkWidget;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
@@ -239,7 +239,6 @@ return [
         'exclude' => [
             AccountWidget::class,
             FilamentInfoWidget::class,
-            GithubLinkWidget::class,
         ],
     ],
 

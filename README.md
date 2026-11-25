@@ -1,313 +1,219 @@
-<p align="center">
-<img width="5197" height="2598" alt="VisitorPortalBannerEN" src="docs/assets/hero/VisitorPortalBannerEN.png" />
-</p>
+# Edu Visitor Portal
 
-# VisitorPortal
+**Self-hosted visitor management for schools: kiosk and QR sign-in, child-safety checks, label badges and emergency roll calls.**
 
-[Deutsch](README.de.md)
+Edu Visitor Portal records who is on your campus, why they are there and whether they hold the
+checks your child-safety policy requires. Visitors sign in at an iPad kiosk or on their own phone,
+receive a printed badge and sign themselves out. Reception sees everyone on site at a glance, checks
+Working with Children Check (WWCC) records and can run an emergency roll call from a phone.
 
-VisitorPortal is a web-based visitor management system for registering, managing and checking in company visitors.
+It is built for schools and other multi-site organisations that want to keep visitor data on their
+own infrastructure, with privacy, audit and data-retention controls designed in rather than added later.
 
-It supports visitor pre-registration, reception workflows, printable visitor badges, a welcome monitor, notifications, and role-based access control.
+Edu Visitor Portal by Simon Grant began as a fork of [VisitorPortal](https://github.com/P0etInc0de/VisitorPortal) by
+Jonathan Läpple and the VisitorPortal contributors. Upstream's visit registration, reception
+workflows, PDF badges, welcome monitor and role-based access control are all still here; the fork
+adds the education-focused features below. Every change to an upstream file is listed in
+[docs/fork/upstream-patches.md](docs/fork/upstream-patches.md).
 
-## Project Status
+The current release is **[v1.0.0](docs/releases/v1.0.0.md)**.
 
-VisitorPortal is a production-oriented visitor management system first developed as part of a student team project. Its implemented core workflows are functional and can support real-world visitor management scenarios, including visit registration, reception check-in, visitor badges, email notifications, role-based access control, and welcome monitor displays.
+> The screenshots use a fictional school ("Riverside College") and fictional visitors.
 
-Although the implemented workflows are designed to be usable in practice, the project should not be deployed in a real organization without an additional security, privacy, and operational review.
-The application processes potentially personal data such as visitor names, companies, contact details, visit times, and check-in/check-out timestamps. Before using it in a real organization, review legal requirements, retention policies, access control, logging, backups, and deployment security.
+## Contents
+
+- [Features](#features)
+- [Getting started](#getting-started)
+- [Documentation](#documentation)
+- [Security and privacy](#security-and-privacy)
+- [Tech stack](#tech-stack)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [Licence](#licence)
 
 ## Features
 
-- Visitor pre-registration and visit management
-- Reception dashboard for daily visits
-- Visitor check-in and check-out
-- Printable visitor badges as PDFs
-- Check-in/out overview for reception desks
-- Welcome monitor for scheduled visitors
-- Role-based access control with custom permissions
-- Optional MFA for users and required MFA for privileged admin roles
-- Optional generic OpenID Connect SSO for enterprise identity providers
-- Admin panel for users, departments, roles, permissions, visitors, visits, monitors, and monitor slides
-- Host notifications by email and in-app notifications
-- Queue and scheduler support for background tasks
-- Light, dark, system, and true black themes
-- White-label branding via environment configuration
-- Docker-based demo setup with prebuilt application image
+### Kiosk and QR sign-in
 
-## Organization and Site Model
+- **iPad kiosk** enrolled with a one-time setup code. The kiosk never signs in as a staff user, can
+  be revoked instantly and clears itself after a configurable period of inactivity.
+- **QR / mobile sign-in**: a per-site QR code (on the kiosk and on a printable A4 poster) lets a
+  queue of visitors sign in on their own phones through the same workflow.
+- **Configurable visitor types** (visitor, contractor, parent, delivery…), each with its own
+  personal details, host requirement (required, optional or none) and badge setting.
+- **Configurable questions**: 13 field types, including yes/no, dropdown, date, photo, signature and
+  file upload, with show-when conditions, sensitive (encrypted) answers and per-site assignments.
+- **Policies** with versioned wording; the exact version each visitor accepted is recorded.
+- **Photo and signature capture** in the browser, including iPad home-screen web apps, with an
+  adjustable camera zoom (head and shoulders by default).
+- **Returning visitors** are recognised by email or mobile number. Saved details are shown masked
+  and can only be reused or changed after a 6-digit code sent by email.
+- **Self sign-out** at the kiosk, on the phone that signed in or through a one-time emailed link,
+  plus per-site **automatic sign-out** at a set time.
 
-VisitorPortal is designed for one organization per instance.
-Multiple sites/locations within one organization are supported.
-For legally separate organizations, run separate instances unless full multi-tenancy is explicitly implemented and audited.
+<p align="center">
+  <img src="docs/assets/screenshots/kiosk-welcome.png" alt="Kiosk welcome screen with visitor type buttons and a mobile check-in QR code" width="49%">
+  <img src="docs/assets/screenshots/kiosk-questions-wwcc.png" alt="Kiosk question step: answering yes to working with children reveals a card number field, followed by reason for visit and photo" width="49%">
+</p>
+<p align="center">
+  <img src="docs/assets/screenshots/mobile-qr-sign-in.png" alt="Phone sign-in after scanning the QR code: choosing a visitor type, then entering details" width="60%">
+</p>
 
-Sites represent physical locations such as receptions, plants, offices, or buildings. Visits, monitors, reception views, and host/substitute selections are scoped by site so one reception desk does not automatically see operational data from another location.
+### Reception and emergency roll call
 
-Visitor master records are organization-wide contacts. Site isolation applies to visits, monitors, operational visibility, and host/substitute assignments, not to the visitor contact record itself.
+- **On site now**: everyone signed in at a site, with visitor type, host and sign-in time,
+  refreshed automatically and limited to the sites a user may see.
+- **Emergency roll calls and drills**: one tap takes a snapshot of everyone on site. Wardens mark
+  people *Here*, *Left* or *Not yet* from a phone, add late arrivals or people who never signed in,
+  and can print a paper copy. Starts, marks and ends are audited.
+- **Emergency SMS and email broadcasts** (through MessagePort) to the people on site, with
+  delivery receipts. A broadcast resumes where it stopped if the server restarts.
+- Upstream's reception dashboard, check-in/out board, visit booking and welcome monitor.
 
-## Tech Stack
+![On site now: seven visitors with type, host and sign-in time, and buttons to start a roll call or a drill](docs/assets/screenshots/reception-on-site-now.png)
 
-- PHP 8.4.27 or newer within the 8.4 series
-- Laravel 12
-- Laravel Livewire
-- MariaDB 11.4 by default (`pdo_mysql` driver)
-- Blade
-- Tailwind CSS 4
-- daisyUI 5
-- Alpine.js
-- Node.js 24 for frontend build tooling
-- Filament 5
-- Spatie Laravel Permission
-- Filament Shield
-- Spatie Laravel PDF
-- Gotenberg 8.32 for PDF generation
-- Mailhog for local/demo email testing
-- Docker and Docker Compose v2
-- GitHub Actions
+![Roll call board during a drill: counts of unaccounted, accounted for and left site, with Here, Left and Not yet buttons for each person](docs/assets/screenshots/emergency-roll-call.png)
 
-## Which ZIP Should I Download?
+### Badges and credentials
 
-- `VisitorPortal-demo-vX.Y.Z.zip`: use this for a quick local demo with Docker and the bundled start scripts.
-- `besucherportal-vX.Y.Z.zip`: use this for source-based review or deployment work.
-- GitHub's auto-generated `Source code` archives: use only when you specifically want the raw repository snapshot.
+- **Label badge printing** straight from the server to network label printers (Brother QL raster
+  over TCP port 9100), so no print dialog appears on the kiosk or phone. Badges show the logo, site,
+  a visitor-type pill, photo, name, company, host and time. A printing failure never undoes a sign-in.
+- **Visitor credentials** such as a Working with Children Check: the number given at sign-in (or
+  imported from CSV) becomes a record that reception checks on the issuing body's own validation
+  page, then marks *Valid* or *Not valid* with an expiry date. Numbers are encrypted at rest,
+  every check is audited, and a review list shows records that are unchecked, expired or due
+  for a re-check.
 
-Do not use demo credentials or demo seed data in production. See [Release Artifacts](docs/release-artifacts.md) for details.
+<p align="center">
+  <img src="docs/assets/screenshots/visitor-badges.png" alt="Two 62 by 100 mm label badges as printed, with the visitor-type pills Visitor and Contractor" width="55%">
+</p>
 
-## Quick Start: Demo Setup
+![Credentials page listing visitors on site whose Working with Children Check needs checking](docs/assets/screenshots/credentials-check.png)
 
-The demo setup is intended for non-technical users. It uses a prebuilt Docker image, so PHP, Composer, npm, and frontend build tools are not required on the host machine.
+### Administration, identity and notifications
 
-Requirements:
+- **Admin dashboard**: a welcome panel, live tiles (on site now, today, compliance, safety),
+  trend charts and system health.
+- **Scheduled reports** (weekly, monthly and after each roll call) emailed as PDF with CSV to
+  recipient groups per site, plus CSV exports of visits and visitors.
+- **Organisation and site settings** in the admin panel: name, contact details, logos, brand
+  colours (kept readable with contrast rules), visitor wording, language and retention periods.
+  Sites inherit the organisation's settings and can override them.
+- **Multi-site**: visits, kiosks, QR codes, printers and reception views are scoped by site.
+- **Microsoft Entra ID**: staff sign-in through OpenID Connect, and optional **host sync** that keeps
+  each site's hosts in step with Entra groups.
+- **Host alerts** by email (including Microsoft 365 mail through Microsoft Graph, without SMTP
+  passwords) and in **Microsoft Teams**, as an activity-feed alert or a chat message from a bot.
+- **Immutable visitor log**: attended visits become view-only, edits to visitor details are
+  audited, and the database protects the audit log from changes.
+- **Audit log** of configuration changes, sign-ins, sign-outs, roll calls and credential checks.
+- **Data retention**: visits, evidence files (photos and signatures), roll calls and audit events
+  are purged on schedules you set, and a legal hold keeps a visit's evidence for as long as needed.
+- **Multi-factor authentication** for every password sign-in; Microsoft sign-in relies on the
+  identity provider's own Conditional Access.
+- Upstream's roles and permissions and light/dark themes.
 
-- Current Docker Desktop or Docker Engine with Docker Compose v2
+![Admin panel: editing the working with children card number question, with the sensitive, remember-for-returning-visitors and credential settings](docs/assets/screenshots/admin-question-editor.png)
 
-Start the demo on Windows:
+![Admin panel: editing the Contractor visitor type, including which personal details it asks for](docs/assets/screenshots/admin-visitor-type.png)
 
-```bat
-start.bat
-```
+## Getting started
 
-Start the demo on macOS/Linux:
-
-```bash
-sh start.sh
-```
-
-After startup:
-
-- Application: [http://localhost:8080](http://localhost:8080)
-- Mailhog: [http://localhost:8025](http://localhost:8025)
-
-On first start, the script creates a local `.env.demo` from `.env.demo.example`. If these ports are already in use, adjust `APP_PORT` and `MAILHOG_PORT` in `.env.demo`.
-
-Stop the demo:
-
-```bash
-sh stop.sh
-```
-
-Reset demo data:
-
-```bash
-sh reset-demo.sh
-```
-
-Update the demo image after selecting the new release tag in the existing `.env.demo` (`VISITORPORTAL_VERSION`). If `VISITORPORTAL_IMAGE` is set, update that image reference instead:
-
-```bash
-sh update.sh
-```
-
-Windows users can use the matching `.bat` scripts.
-
-The update script pulls the configured version; it does not select a newer release automatically. Keep the existing configuration and volumes to preserve demo data. `reset-demo.sh` and `reset-demo.bat` delete the demo database and uploaded files.
-
-In the source repository, `.env.demo.example` contains `RELEASE_VERSION_PLACEHOLDER`. Official release ZIPs replace that placeholder with the published release tag so demos are reproducible:
-
-```env
-VISITORPORTAL_VERSION=vX.Y.Z
-```
-
-## Updating An Existing Installation
-
-For production Docker or source/LAMP installations, follow the [production update procedure](docs/deployment.md#updates). Keep the existing database, storage and `APP_KEY`, and update the app, queue and scheduler together.
-
-The [v0.9.1 release notes](docs/releases/v0.9.1.md) describe the security updates and the upgrade from v0.9.0. Source/LAMP installations require PHP `>=8.4.27,<8.5`; the official Docker image includes the patched runtime.
-
-## Demo Accounts
-
-All demo accounts use the same password: `ChangeMe-42!`
-
-| Role | Email | Password |
-| --- | --- | --- |
-| Admin | `admin@example.org` | `ChangeMe-42!` |
-| Reception | `reception@example.org` | `ChangeMe-42!` |
-| Employee | `employee@example.org` | `ChangeMe-42!` |
-| Manager | `manager@example.org` | `ChangeMe-42!` |
-| Welcome monitor | `welcome@example.org` | `ChangeMe-42!` |
-| Security/reception | `security@example.org` | `ChangeMe-42!` |
-
-The seeders also create 20 additional Faker-based users, 50 additional Faker-based visitors, and 50 to 100 demo visits. Demo email addresses use reserved `example.org`, `example.com`, or `example.net` domains. Demo phone numbers use reserved media/demo number ranges in E.164 format or are intentionally blank. Demo seeders are blocked in `APP_ENV=production`.
-
-## Development Setup
-
-The developer setup uses the source-mounted `docker-compose.yml`.
+Edu Visitor Portal runs in Docker. For a local development stack:
 
 ```bash
 cp backend/.env.example backend/.env
-docker compose run --rm web composer install
 docker compose up -d --build
+docker compose exec web composer install
 docker compose exec web php artisan key:generate
 docker compose exec web php artisan migrate:fresh --seed
 ```
 
-Application:
+Then open [http://localhost:8080](http://localhost:8080). The seeders create demo accounts (for
+example `admin@example.org` and `reception@example.org`, password `ChangeMe-42!`); demo seeding is
+blocked in production. Never use demo data or credentials in a real deployment.
 
-- [http://localhost:8080](http://localhost:8080)
+For production, use the published container image and follow the deployment guide below:
 
-Vite development server:
-
-- [http://localhost:5173](http://localhost:5173)
-
-More setup details are documented in [docs/setup.md](docs/setup.md). Operational monitoring and health checks are documented in [docs/operations.md](docs/operations.md).
-
-## Tests and Quality Checks
-
-Run the test suite inside the development container:
-
-```bash
-docker compose exec web php artisan test
+```text
+ghcr.io/alta1college/eduvisitorportal:v1.0.0
 ```
 
-Run a targeted test file:
+English is the default language (German, French and Czech are also available) and the default
+timezone is UTC; set `APP_TIMEZONE` for your region before the first start.
 
-```bash
-docker compose exec web php artisan test tests/Feature/Receptionist/ReceptionAdministerVisitTest.php
-```
-
-Run Laravel Pint style checks:
-
-```bash
-docker compose exec web ./vendor/bin/pint --test -v
-```
-
-Build frontend assets:
-
-```bash
-docker compose run --rm node npm run build
-```
-
-The GitHub Actions workflow runs PHP setup, Pint, migrations, and tests against MariaDB.
-
-## Configuration and White Labeling
-
-VisitorPortal has a central branding configuration in `backend/config/branding.php`.
-
-### Single Sign-On
-
-VisitorPortal can be configured for generic OpenID Connect SSO. The implementation is provider-independent and is intended for enterprise identity providers such as Microsoft Entra ID, Keycloak, Authentik, Okta and other OIDC-compatible systems.
-
-SSO is disabled by default. Local authentication remains available unless `AUTH_MODE=sso_only` is configured. In `sso_only`, local login is reserved for break-glass accounts with the `LoginLocallyInSsoOnlyMode` permission.
-
-Common environment variables:
-
-- `BRANDING_NAME`
-- `BRANDING_LOGO_LIGHT`
-- `BRANDING_LOGO_DARK`
-- `BRANDING_MAIL_LOGO`
-- `BRANDING_BADGE_LOGO`
-- `BRANDING_BADGE_DESIGN` (`standard` or `photo_qr`)
-- `BRANDING_BADGE_ACCENT_COLOR`
-- `BRANDING_MONITOR_FALLBACK_HEADING`
-- `BRANDING_MONITOR_FALLBACK_SUBHEADING`
-- `BRANDING_MONITOR_SLIDE_HEADING`
-
-The default assets are stored in `backend/public/images/branding/`.
-
-For production-like deployments, explicitly review these demo defaults:
-
-- `APP_DEBUG`
-- `APP_KEY`
-- database credentials
-- mail settings
-- `AUTO_MIGRATE`
-- `AUTO_SEED`
-- `FORCE_SEED`
-- `APP_URL`
-- HTTPS/reverse proxy configuration
-
-## Project Structure
-
-- `backend/app/` - Laravel application code
-- `backend/app/Livewire/` - Livewire components
-- `backend/app/Filament/` - Filament admin resources
-- `backend/resources/views/` - Blade views and UI partials
-- `backend/resources/css/` - Tailwind/daisyUI entrypoint and themes
-- `backend/database/migrations/` - database schema
-- `backend/database/seeders/` - demo and setup seeders
-- `backend/public/images/branding/` - default branding assets
-- `docker/` - application Docker image and Apache/PHP configuration
-- `docker-compose.yml` - source-mounted development setup
-- `docker-compose.demo.yml` - prebuilt-image demo setup
-- `.github/workflows/` - CI and image build workflows
-- `docs/` - release, setup, deployment and operations documentation
+| Guide | What it covers |
+| --- | --- |
+| [Setup](docs/setup.md) | Development and demo setup in detail |
+| [Production deployment](docs/fork/production-deployment.md) | A single Linux server with Docker, Caddy and Let's Encrypt |
+| [Deployment](docs/deployment.md) | Upstream's production guide, reverse proxy and updates |
+| [Go-live checklist](docs/go-live-checklist.md) | What to review before handling real visitor data |
+| [Configuration](docs/configuration.md) | Environment settings |
+| [Kiosk](docs/fork/phase-5-kiosk.md) and [QR sign-in](docs/fork/phase-6-qr-mobile.md) | Enrolling kiosks, QR codes and posters, customising the sign-in |
+| [Badge printing](docs/fork/phase-8-badge-printing.md) | Label printers and the badge layout |
+| [Emergency operations](docs/fork/phase-9-emergency.md) | On site now, roll calls and automatic sign-out |
+| [Credentials](docs/fork/credentials.md) | Working with Children Checks and similar records |
+| [Entra hosts and staff SSO](docs/fork/phase-10-entra-hosts-and-deployment.md) | Host sync from Entra groups and Microsoft sign-in |
+| [Microsoft Graph mail](docs/fork/microsoft-graph-mail.md) | Sending mail through Microsoft 365 with OAuth |
+| [Teams notifications](docs/fork/teams-notifications.md) | Host alerts in Microsoft Teams |
+| [Emergency broadcasts](docs/fork/emergency-broadcast.md) | SMS and email messages to everyone on site |
+| [Admin dashboard](docs/fork/admin-dashboard.md) | Dashboard tiles, charts, scheduled reports and exports |
+| [Release notes](docs/releases/v1.0.0.md) and [release artifacts](docs/release-artifacts.md) | What is in each release and how it is published |
 
 ## Documentation
 
-- [Setup Guide](docs/setup.md)
-- [Release Artifacts](docs/release-artifacts.md)
-- [Configuration](docs/configuration.md)
-- [Deployment](docs/deployment.md)
-- [Go-Live Checklist](docs/go-live-checklist.md)
-- [Monitoring and Operations](docs/operations.md)
-- [Roles and Permissions](docs/roles.md)
-- [Queue](docs/queue.md)
-- [Scheduler](docs/scheduler.md)
-- [Welcome Monitor](docs/welcome_monitor.md)
-- [Security Hardening](docs/security-hardening.md)
-- [Single Sign-On](docs/sso.md)
-- [Known Limitations](docs/known-limitations.md)
+- Operations: [monitoring and operations](docs/operations.md), [queue](docs/queue.md),
+  [scheduler](docs/scheduler.md), [welcome monitor](docs/welcome_monitor.md)
+- Access: [roles and permissions](docs/roles.md), [single sign-on](docs/sso.md)
+- Fork design: [architecture assessment](docs/fork/phase-0-1-assessment.md),
+  [organisation configuration](docs/fork/phase-2-organisation-configuration.md),
+  [visitor workflow](docs/fork/phase-3-visitor-workflow.md),
+  [public boundary](docs/fork/phase-4-public-boundary.md),
+  [returning visitors and sign-out](docs/fork/phase-7-returning-signout.md)
+- Upstream: [upstream patches](docs/fork/upstream-patches.md), [upstream sync](docs/fork/upstream-sync.md),
+  [known limitations](docs/known-limitations.md)
 
-## Roadmap
+## Security and privacy
 
-Possible next steps:
+Edu Visitor Portal processes personal information about visitors, including photos and child-safety
+check numbers. Before using it with real data, review your legal obligations, retention periods,
+access control, backups and hosting.
 
-- Add a self-check-in workflow
-- Add export and reporting features, for example CSV, calendar events, or contact exports
-- Add full activity logging in the database, beyond technical file logs
-- Harden authorization and security checks further
-- Improve automated test coverage for edge cases and browser-level interactions
-- Add screenshots and visual feature documentation
+- [SECURITY.md](SECURITY.md): how to report a vulnerability (not through public issues)
+- [PRIVACY.md](PRIVACY.md) and the [data protection notice template](docs/data-protection-notice-template.md)
+- [Security validation](docs/fork/phase-11-security-validation.md): review findings, fixes and open items
+- [Security hardening](docs/security-hardening.md)
 
-## Security
+The anonymous visitor pages (kiosk, QR and sign-out links) are a separate security boundary with
+opaque tokens, rate limits and audit logging; see [the public boundary](docs/fork/phase-4-public-boundary.md).
 
-Please read [SECURITY.md](SECURITY.md) before reporting vulnerabilities or deploying VisitorPortal in an environment with real visitor data.
+## Tech stack
 
-Do not report sensitive security issues through public GitHub issues.
+PHP 8.4, Laravel 13, Livewire 4, Filament 5, MariaDB 11.4, Tailwind CSS with daisyUI, Gotenberg for
+PDF and badge rendering, Docker Compose, and PHPUnit and Playwright tests. CI runs the tests on
+MariaDB, a code style check, a licence header check and a single sign-on end-to-end test. Contributors should read
+[CLAUDE.md](CLAUDE.md) and [CONTRIBUTING.md](CONTRIBUTING.md) for the project rules.
 
 ## Contributing
 
-Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening larger pull requests.
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a larger
+pull request. Organisation-specific values (sites, branding, WWCC rules, printers) belong in
+settings, never in code.
 
-## License
+## Credits
 
-Copyright (C) 2026 Jonathan Läpple and VisitorPortal contributors.
+Edu Visitor Portal is developed by [Simon Grant](https://github.com/SimonAlta1).
 
-This project is licensed under the GNU General Public License v3.0 or later. See [LICENSE](LICENSE).
+Based on [VisitorPortal](https://github.com/P0etInc0de/VisitorPortal) by Jonathan Läpple and
+contributors. Many thanks to the original team (Jonathan Läpple, Jannik Schabel, Jan Wangerin,
+Lena Berger and Peter Claaß) and to everyone who has contributed to VisitorPortal: their work is the
+foundation this project builds on.
 
-## Authors and Credits
+## Licence
 
-The project was created collaboratively as part of an initial student project phase at university.
-Further development, cleanup, and technical improvements continued after the original project work.
+Copyright (C) 2026 Jonathan Läpple and VisitorPortal contributors (upstream VisitorPortal).
+Copyright (C) 2026 Simon Grant (Edu Visitor Portal additions and changes).
 
-### Initial Project Authors
-
-The following people are the initial project authors from the original student project team. Later contributors are acknowledged through the project history and their contributions.
-
-- **Jonathan Läpple** – Project Lead and Developer
-- **Jannik Schabel** – Developer
-- **Jan Wangerin** – Developer
-- **Lena Berger** – Developer
-- **Peter Claaß** – Developer
-
-We would like to thank all contributors for their work on concept development, implementation, testing, documentation, and feedback.
+Edu Visitor Portal is free software, licensed under the GNU General Public License v3.0 or later
+(GPL-3.0-or-later). See [LICENSE](LICENSE).
