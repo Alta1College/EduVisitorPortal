@@ -8,6 +8,7 @@
 
 namespace App\Emergency\Livewire;
 
+use App\Emergency\Broadcast\EmergencyBroadcast;
 use App\Emergency\Broadcast\EmergencyNotification;
 use App\Emergency\OnSiteRegister;
 use App\Emergency\RollCall;
@@ -76,6 +77,16 @@ class RollCallPage extends Component
         $this->filter = 'all';
     }
 
+    /**
+     * A real emergency during a drill: the drill ends and the emergency roll call opens.
+     */
+    public function escalate(): void
+    {
+        $rollCall = app(RollCalls::class)->escalate($this->openRollCall(), $this->user());
+
+        $this->redirectRoute('reception.roll-calls.show', $rollCall, navigate: false);
+    }
+
     public function render(): View
     {
         $rollCall = $this->rollCall();
@@ -102,6 +113,9 @@ class RollCallPage extends Component
             'timezone' => $timezone,
             'statusLabels' => RollCallEntry::statusLabels(),
             'kinds' => RollCall::kinds(),
+            'messagesAvailable' => EmergencyBroadcast::available(),
+            // Wardens still on an ended board (e.g. a drill that became an emergency) are sent on.
+            'openNow' => $rollCall->isOpen() ? null : app(RollCalls::class)->openFor($rollCall->site_id),
             ...$outcomes,
         ]);
     }

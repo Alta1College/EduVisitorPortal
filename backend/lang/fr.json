@@ -1355,5 +1355,7 @@
     "Neuen Code senden": "Envoyer un nouveau code",
     "Um Ihre gespeicherten Angaben zu ändern, wenden Sie sich bitte an den Empfang.": "Pour modifier vos informations enregistrées, veuillez vous adresser à l’accueil.",
     "Wenn Sie das nicht waren, können Sie diese E-Mail ignorieren. Ihre Angaben bleiben unverändert.": "Si ce n’était pas vous, vous pouvez ignorer cet e-mail. Vos informations restent inchangées.",
-    "Wir haben einen Code an :email gesendet. Bitte hier eingeben:": "Nous avons envoyé un code à :email. Veuillez le saisir ici :"
+    "Wir haben einen Code an :email gesendet. Bitte hier eingeben:": "Nous avons envoyé un code à :email. Veuillez le saisir ici :",
+    "Echter Notfall": "Urgence réelle",
+    "Echter Notfall? Die Übung wird beendet und eine Notfall-Anwesenheitskontrolle mit allen aktuell angemeldeten Personen gestartet. Bereits erfasste Personen bleiben erfasst.": "Urgence réelle ? L’exercice se termine et un appel d’urgence démarre avec toutes les personnes actuellement enregistrées. Les personnes déjà pointées le restent."
 }

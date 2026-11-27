@@ -18,7 +18,9 @@ state of their visit**, so nobody is left off. People signed in on an earlier da
 - **Start roll call** (emergency) or **Start drill** takes a **snapshot**: every person on site
   is copied onto the list (name, company, type, host, check-in time, safety notes encrypted at
   rest). Later sign-outs, visit changes or purges never remove anyone. Pressing start twice
-  (two wardens) opens the same roll call; starts are serialised per site.
+  (two wardens) opens the same roll call; starts are serialised per site. The one exception: a
+  real emergency while a drill is open replaces the drill (marks kept, fresh list, emergency
+  messages once; see `emergency-broadcast.md`).
 - **Board** (`/reception/roll-calls/{id}`, phone-friendly, refreshes every 5 s): each person has
   **Here / Left / Not yet** (accounted / left site / unaccounted); counts per status act as
   filters; name search. People who signed out normally after the start show "Signed out at
