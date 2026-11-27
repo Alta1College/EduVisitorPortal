@@ -37,9 +37,8 @@ class PurgeEvidenceFiles extends Command
         VisitResponse::query()
             ->whereNotNull('file_path')
             ->where('created_at', '<', $cutoff)
-            // A visit under a legal hold keeps its evidence until the hold ends.
-            ->where(fn ($query) => $query->whereNull('visit_id')->orWhereDoesntHave('visit', fn ($visit) => $visit
-                ->whereNotNull('retention_hold_until')->where('retention_hold_until', '>', now())))
+            // A visit under a legal hold (dated or indefinite) keeps its evidence until the hold ends.
+            ->where(fn ($query) => $query->whereNull('visit_id')->orWhereDoesntHave('visit', fn ($visit) => $visit->onLegalHold()))
             ->chunkById(500, function ($responses) use ($disk, $dryRun, &$expired): void {
                 foreach ($responses as $response) {
                     $expired++;
