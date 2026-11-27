@@ -74,19 +74,24 @@ class MessagePortWebhookController
         };
 
         if (filled($providerId) && (is_string($providerId) || is_int($providerId)) && $row->provider_message_id === null) {
-            $row->provider_message_id = mb_substr((string) $providerId, 0, 64);
+            EmergencyNotification::query()->whereKey($row->getKey())->whereNull('provider_message_id')
+                ->update(['provider_message_id' => mb_substr((string) $providerId, 0, 64)]);
         }
 
         // Final statuses stay; 'sent' arriving after 'delivered' (retries, ordering) is ignored.
+        // Conditional in the database, so a send worker or another receipt writing at the same
+        // moment cannot be overwritten with an older status (and vice versa).
         if ($new !== null && ! $row->isFinal() && $row->status !== $new) {
-            $row->status = $new;
-            $row->error_code = $new === EmergencyNotification::FAILED ? strtoupper(mb_substr($status, 0, 64)) : null;
+            $changed = EmergencyNotification::query()->whereKey($row->getKey())
+                ->whereNotIn('status', [...EmergencyNotification::FINAL, $new])
+                ->update([
+                    'status' => $new,
+                    'error_code' => $new === EmergencyNotification::FAILED ? strtoupper(mb_substr($status, 0, 64)) : null,
+                ]);
 
-            Log::info('emergency_sms_receipt', ['reference' => $row->reference, 'to' => $row->to_masked, 'status' => $status]);
-        }
-
-        if ($row->isDirty()) {
-            $row->save();
+            if ($changed > 0) {
+                Log::info('emergency_sms_receipt', ['reference' => $row->reference, 'to' => $row->to_masked, 'status' => $status]);
+            }
         }
     }
 }

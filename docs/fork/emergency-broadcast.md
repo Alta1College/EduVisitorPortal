@@ -43,6 +43,14 @@ in**, **off by default**:
 
 The switch only appears when emergency messages are switched on.
 
+**A real emergency during a drill.** While a drill is open, the on-site page and the drill's
+board show **Real emergency**. It ends the drill and starts an emergency roll call in its place:
+a fresh list of everyone signed in now, the marks wardens already made in the drill (and people
+they added by hand), and the emergency SMS and e-mail to everyone on the new list, sent once, even
+to people who already had the drill message. Pressing "Start roll call" for an emergency while a
+drill is open does the same. Wardens still on the drill's board get a button to the emergency.
+The audit log records `roll_call.escalated`; no separate drill report is sent.
+
 ## Roll call board
 
 Next to each name: **SMS sending**, **SMS delivered**, **SMS failed** or **No mobile**, updated from
@@ -51,12 +59,24 @@ sending, 1 failed, 2 no mobile · Email: 14 sent, 0 pending, 0 failed". The stat
 query on the board's 5-second refresh.
 
 Sending never blocks or breaks the roll call: the start only queues a job (after the roll call is
-saved). The job is tried up to **three times** (after 5 and 20 seconds). Each run reuses the
-rows already created and sends only messages still pending, so a crash part-way finishes on the
-retry without skipping anyone or re-sending messages already recorded (a crash in the instant
+saved). The job is tried up to **five times** (after 5, 15, 30 and 60 seconds). Each run reuses
+the rows already created and sends only messages still pending, so a crash part-way finishes on
+the retry without skipping anyone or re-sending messages already recorded (a crash in the instant
 between MessagePort accepting a text and the row being updated may repeat that one text). A
 lock stops two workers sending the same roll call at once. Problems are logged and shown as
 "SMS failed", never as an error to the warden. Each e-mail is its own queued job.
+
+- **Temporary problems are retried.** If MessagePort cannot be reached, times out, or answers
+  408/425/429 or 5xx, the texts stay "sending" and the job tries again after the next wait. Only
+  after the last try are they shown as failed (with the reason, e.g. `HTTP_503`). A refusal that
+  would not change on a retry (bad credentials, invalid or opted-out number) is final at once.
+  A timeout may mean MessagePort did take the text, so a retry can repeat it: in an emergency a
+  duplicate is better than nothing.
+- **Status updates cannot go backwards.** The send worker only moves a text out of "pending",
+  and a delivery receipt only changes a status that is not final, both as conditional database
+  updates. A receipt that arrives while the worker is still waiting for MessagePort is kept.
+- **Each e-mail is sent once.** A retry re-queues every e-mail still pending; each e-mail job
+  claims its row (a lock per message) and re-reads it first, so a duplicate job sends nothing.
 
 Audit: `roll_call.started` now records `messages` (true/false); `roll_call.broadcast` records the
 kind, SMS accepted / failed / without mobile, e-mails queued and whether dry run was on, with the

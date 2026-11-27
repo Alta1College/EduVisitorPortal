@@ -15,6 +15,13 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('reception.roll-calls.print', $rollCall) }}" target="_blank" class="btn btn-outline">{{ __('Drucken') }}</a>
+                @if ($rollCall->isOpen() && $rollCall->kind === \App\Emergency\RollCall::KIND_DRILL)
+                    {{-- Fork: a real emergency during a drill replaces the drill (marks are kept). --}}
+                    <button type="button" class="btn btn-error" x-data data-test="escalate"
+                            x-on:click="if (confirm(@js(__('Echter Notfall? Die Übung wird beendet und eine Notfall-Anwesenheitskontrolle mit allen aktuell angemeldeten Personen gestartet. Bereits erfasste Personen bleiben erfasst.').($messagesAvailable ? ' '.__('Alle angemeldeten Besucher erhalten sofort eine Notfallnachricht.') : '')))) $wire.escalate()">
+                        {{ __('Echter Notfall') }}
+                    </button>
+                @endif
                 @if ($rollCall->isOpen())
                     <button type="button" class="btn btn-neutral" x-data
                             x-on:click="if (confirm(@js(__('Anwesenheitskontrolle beenden? Danach kann nichts mehr geändert werden.')))) $wire.end()">
@@ -23,6 +30,11 @@
                 @endif
             </div>
         </div>
+        @if ($openNow)
+            <a href="{{ route('reception.roll-calls.show', $openNow) }}" class="btn btn-error btn-lg mt-3 w-full sm:w-auto" data-test="open-now">
+                {{ __('Laufende Anwesenheitskontrolle öffnen') }}
+            </a>
+        @endif
 
         <div class="mt-3 grid grid-cols-3 gap-2 text-center">
             @foreach (['unaccounted' => 'bg-error text-error-content', 'accounted' => 'bg-success text-success-content', 'left_site' => 'bg-base-300'] as $status => $classes)
