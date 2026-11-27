@@ -119,6 +119,27 @@ class Visit extends Model
         });
     }
 
+    /**
+     * Fork: visits under a legal hold: one with a reason and no end date (indefinite), or one
+     * whose end date has not passed. Every automated deletion (visits, evidence files) must use
+     * this one definition.
+     */
+    public function scopeOnLegalHold(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->where(fn (Builder $query) => $query->whereNotNull('retention_hold_reason')->whereNull('retention_hold_until'))
+                ->orWhere('retention_hold_until', '>=', now());
+        });
+    }
+
+    public function scopeNotOnLegalHold(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->where(fn (Builder $query) => $query->whereNull('retention_hold_reason')->whereNull('retention_hold_until'))
+                ->orWhere('retention_hold_until', '<', now());
+        });
+    }
+
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->can('ViewAny:Visit') || $user->can('EditAny:Visit') || $user->can('DeleteAny:Visit')) {

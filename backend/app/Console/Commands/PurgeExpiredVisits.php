@@ -136,22 +136,25 @@ class PurgeExpiredVisits extends Command
         return Visit::query()
             ->where('scheduled_until', '<', $cutoff)
             // Active legal holds keep visits out of automated deletion.
-            ->where(function (Builder $query): void {
-                $query->where(function (Builder $query): void {
-                    $query->whereNull('retention_hold_until')
-                        ->whereNull('retention_hold_reason');
-                })->orWhere(function (Builder $query): void {
-                    $query->whereNotNull('retention_hold_until')
-                        ->where('retention_hold_until', '<', now());
-                });
-            });
+            ->notOnLegalHold();
     }
 
     private function orphanVisitorsQuery(Carbon $cutoff): Builder
     {
-        return Visitor::query()
+        return $this->withoutCredentials(Visitor::query()
             ->where('updated_at', '<', $cutoff)
-            ->doesntHave('visits');
+            ->doesntHave('visits'));
+    }
+
+    /**
+     * Fork: a person on the credential register (e.g. imported WWCC holders) may never have
+     * visited; they are not orphans. Removing their credentials makes them eligible again.
+     */
+    private function withoutCredentials(Builder $query): Builder
+    {
+        return $query->whereNotExists(fn ($credentials) => $credentials->selectRaw('1')
+            ->from('visitor_credentials')
+            ->whereColumn('visitor_credentials.visitor_id', 'visitors.id'));
     }
 
     /**
@@ -159,7 +162,7 @@ class PurgeExpiredVisits extends Command
      */
     private function potentialOrphanVisitorsQuery(Carbon $cutoff, Collection $expiredVisitIds): Builder
     {
-        return Visitor::query()
+        return $this->withoutCredentials(Visitor::query())
             ->where('updated_at', '<', $cutoff)
             ->where(function (Builder $query) use ($expiredVisitIds): void {
                 $query->doesntHave('visits');

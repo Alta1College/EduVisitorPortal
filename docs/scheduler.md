@@ -73,6 +73,8 @@ php artisan visits:purge-expired
 
 `visits:purge-expired` removes expired visit data after `PRIVACY_VISIT_RETENTION_DAYS` unless a legal hold is active. It also removes related expired operational data such as old notifications, generated monitor slides and obsolete manual monitor visitor names where it is safe to do so.
 
+A legal hold is active when its end date has not passed, or when it has a reason and no end date (indefinite). The same rule protects visits from `visits:purge-expired` and their photos and documents from `visitorportal:evidence:purge`. Visitors with no remaining visits are removed as orphans, except people on the credential register (for example imported screening-check holders who have never visited); removing their credentials makes them eligible again.
+
 Technical retention:
 
 ```bash
