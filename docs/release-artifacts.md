@@ -48,7 +48,7 @@ Before going live, review [Production Deployment](deployment.md), [Security Hard
 
 - Production Docker and source/LAMP: follow [Production Updates](deployment.md#updates).
 - Existing demos: select the desired tag in the existing `.env.demo`, then run the update script described in [Setup](setup.md#stop-reset-and-update).
-- Version-specific requirements and changes: see the [v1.0.0 release notes](releases/v1.0.0.md); source/LAMP installations need PHP 8.4.
+- Version-specific requirements and changes: see the [v1.0.1 release notes](releases/v1.0.1.md); source/LAMP installations need PHP 8.4.
 
 Retain the existing database, storage volumes and `APP_KEY`. A demo reset is destructive and is not an update method.
 

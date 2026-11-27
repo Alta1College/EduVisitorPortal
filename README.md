@@ -16,7 +16,7 @@ workflows, PDF badges, welcome monitor and role-based access control are all sti
 adds the education-focused features below. Every change to an upstream file is listed in
 [docs/fork/upstream-patches.md](docs/fork/upstream-patches.md).
 
-The current release is **[v1.0.0](docs/releases/v1.0.0.md)**.
+The current release is **[v1.0.1](docs/releases/v1.0.1.md)**.
 
 > The screenshots use a fictional school ("Riverside College") and fictional visitors.
 
@@ -137,12 +137,12 @@ blocked in production. Never use demo data or credentials in a real deployment.
 For production, use the published container image and follow the deployment guide below:
 
 ```text
-ghcr.io/alta1college/eduvisitorportal:v1.0.0
+ghcr.io/alta1college/eduvisitorportal:v1.0.1
 ```
 
 If pulling the image is refused (the package is not yet public), build the same image from the
-release's source: `docker build --pull --target app -f docker/app/Dockerfile -t eduvisitorportal:v1.0.0 .`
-and set `VISITORPORTAL_IMAGE=eduvisitorportal:v1.0.0`.
+release's source: `docker build --pull --target app -f docker/app/Dockerfile -t eduvisitorportal:v1.0.1 .`
+and set `VISITORPORTAL_IMAGE=eduvisitorportal:v1.0.1`.
 
 English is the default language (German, French and Czech are also available) and the default
 timezone is UTC; set `APP_TIMEZONE` for your region before the first start.
@@ -163,7 +163,7 @@ timezone is UTC; set `APP_TIMEZONE` for your region before the first start.
 | [Teams notifications](docs/fork/teams-notifications.md) | Host alerts in Microsoft Teams |
 | [Emergency broadcasts](docs/fork/emergency-broadcast.md) | SMS and email messages to everyone on site |
 | [Admin dashboard](docs/fork/admin-dashboard.md) | Dashboard tiles, charts, scheduled reports and exports |
-| [Release notes](docs/releases/v1.0.0.md) and [release artifacts](docs/release-artifacts.md) | What is in each release and how it is published |
+| [Release notes](docs/releases/) and [release artifacts](docs/release-artifacts.md) | What is in each release and how it is published |
 
 ## Documentation
 
