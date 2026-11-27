@@ -21,6 +21,11 @@ class VisitorPortalPermissions
      */
     private const STANDALONE_PERMISSIONS = [
         'LoginLocallyInSsoOnlyMode',
+        // Fork: checked by policies but given to no built-in role; created so a custom role can
+        // be granted them in the role editor (v1.0.1, issue #7).
+        'ViewAny:Monitor',
+        'EditSite:Visit',
+        'DeleteSite:Visit',
     ];
 
     /**

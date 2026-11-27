@@ -140,6 +140,10 @@ For production, use the published container image and follow the deployment guid
 ghcr.io/alta1college/eduvisitorportal:v1.0.0
 ```
 
+If pulling the image is refused (the package is not yet public), build the same image from the
+release's source: `docker build --pull --target app -f docker/app/Dockerfile -t eduvisitorportal:v1.0.0 .`
+and set `VISITORPORTAL_IMAGE=eduvisitorportal:v1.0.0`.
+
 English is the default language (German, French and Czech are also available) and the default
 timezone is UTC; set `APP_TIMEZONE` for your region before the first start.
 

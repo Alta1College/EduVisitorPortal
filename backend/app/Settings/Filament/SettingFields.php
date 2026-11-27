@@ -9,6 +9,7 @@
 namespace App\Settings\Filament;
 
 use App\Models\User;
+use App\Reports\ReportRecipients;
 use App\Rules\SafeRasterImage;
 use App\Settings\SettingDefinition;
 use App\Settings\SettingsRegistry;
@@ -132,8 +133,9 @@ final class SettingFields
         if ($definition->type !== SettingDefinition::TYPE_IMAGE) {
             $field->rules(array_values(array_filter(
                 $definition->rules,
-                // The colour picker already applies the pattern; avoid a duplicate message.
-                fn ($rule): bool => ! (is_string($rule) && str_starts_with($rule, 'regex:')),
+                // The colour picker already applies its pattern; avoid a duplicate message. Every
+                // other pattern (times, recipient lists, group IDs) must be checked here.
+                fn ($rule): bool => ! ($definition->type === SettingDefinition::TYPE_COLOR && is_string($rule) && str_starts_with($rule, 'regex:')),
             )));
         }
 
@@ -141,6 +143,9 @@ final class SettingFields
         $helperText = trim(implode(' ', array_filter([
             $helper !== null ? __($helper) : null,
             $definition->key === 'organisation.host_notifications.teams' ? self::teamsDelivery() : null,
+            $inheritedHint !== null && in_array($definition->key, [ReportRecipients::WEEKLY, ReportRecipients::MONTHLY, ReportRecipients::ROLL_CALL], true)
+                ? __('Für diesen Standort: leer übernimmt die Adressen der Organisation; „none“ eingeben, damit dieser Standort keinen Bericht erhält.')
+                : null,
             $inheritedHint,
         ])));
 

@@ -1357,5 +1357,6 @@
     "Wenn Sie das nicht waren, können Sie diese E-Mail ignorieren. Ihre Angaben bleiben unverändert.": "If this wasn’t you, you can ignore this email. Your details stay as they are.",
     "Wir haben einen Code an :email gesendet. Bitte hier eingeben:": "We’ve sent a code to :email. Please enter it here:",
     "Echter Notfall": "Real emergency",
-    "Echter Notfall? Die Übung wird beendet und eine Notfall-Anwesenheitskontrolle mit allen aktuell angemeldeten Personen gestartet. Bereits erfasste Personen bleiben erfasst.": "Real emergency? The drill ends and an emergency roll call starts with everyone signed in now. People already marked keep their marks."
+    "Echter Notfall? Die Übung wird beendet und eine Notfall-Anwesenheitskontrolle mit allen aktuell angemeldeten Personen gestartet. Bereits erfasste Personen bleiben erfasst.": "Real emergency? The drill ends and an emergency roll call starts with everyone signed in now. People already marked keep their marks.",
+    "Für diesen Standort: leer übernimmt die Adressen der Organisation; „none“ eingeben, damit dieser Standort keinen Bericht erhält.": "For this site: empty uses the organisation's addresses; enter “none” so this site gets no report."
 }

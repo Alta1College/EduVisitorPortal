@@ -140,7 +140,7 @@ class VisitShowPage extends Component
         return [
             'date' => $this->visit->scheduled_from?->format('d.m.Y') ?? '–',
             'timeRange' => $this->visit->scheduled_from
-                ? $this->visit->scheduled_from->format('H:i').($this->visit->scheduled_until ? ' bis '.$this->visit->scheduled_until->format('H:i') : '')
+                ? $this->visit->scheduled_from->format('H:i').($this->visit->scheduled_until ? '–'.$this->visit->scheduled_until->format('H:i') : '')
                 : '–',
             'host' => $this->displayUserName($this->visit->host),
             'substitute' => $this->displayUserName($this->visit->substituteUser),
