@@ -34,7 +34,8 @@ class RollCalls
 
     /**
      * Snapshot everyone on site now. If a roll call is already open at the site, that one is
-     * returned instead (two wardens pressing at once must not split the list).
+     * returned instead (two wardens pressing at once must not split the list), except that a
+     * real emergency started while a drill is open replaces the drill (see escalate()).
      *
      * A real emergency always messages everyone on the list (when emergency messages are
      * switched on); a drill only with $sendDrillMessages. Messages are queued after commit and
@@ -51,28 +52,104 @@ class RollCalls
             Site::query()->whereKey($site->getKey())->lockForUpdate()->first();
 
             if ($open = $this->openFor($site->getKey())) {
-                return $open;
+                return $kind === RollCall::KIND_EMERGENCY && $open->kind === RollCall::KIND_DRILL
+                    ? $this->escalateLocked($open, $site, $user)
+                    : $open;
             }
 
-            $rollCall = RollCall::query()->create([
-                'site_id' => $site->getKey(),
-                'kind' => $kind,
-                'started_at' => now(),
-                'started_by_user_id' => $user->getKey(),
-            ]);
-
-            $people = $this->register->people($site);
-
-            foreach ($people as $person) {
-                $this->addPerson($rollCall, $person, RollCallEntry::SOURCE_SNAPSHOT);
-            }
-
-            $messages = ($kind === RollCall::KIND_EMERGENCY || $sendDrillMessages) && $this->broadcast->request($rollCall);
-
-            $this->audit->record('roll_call.started', subject: $rollCall, site: $site, context: ['kind' => $kind, 'people' => count($people), 'messages' => $messages], actorUserId: $user->getKey());
-
-            return $rollCall;
+            return $this->create($site, $user, $kind, $sendDrillMessages);
         });
+    }
+
+    /**
+     * A real emergency while a drill is still open: the drill ends and an emergency roll call
+     * starts in its place, with a fresh list of everyone on site, the marks wardens already made
+     * in the drill, and the emergency messages (exactly once). If the open roll call is already
+     * an emergency (another warden was quicker), that one is returned.
+     */
+    public function escalate(RollCall $drill, User $user): RollCall
+    {
+        return DB::transaction(function () use ($drill, $user): RollCall {
+            $site = Site::query()->whereKey($drill->site_id)->lockForUpdate()->firstOrFail();
+            $open = $this->openFor($site->getKey());
+
+            if ($open === null) {
+                return $this->create($site, $user, RollCall::KIND_EMERGENCY, false);
+            }
+
+            return $open->kind === RollCall::KIND_DRILL ? $this->escalateLocked($open, $site, $user) : $open;
+        });
+    }
+
+    /**
+     * Call inside a transaction holding the site lock.
+     */
+    private function escalateLocked(RollCall $drill, Site $site, User $user): RollCall
+    {
+        $drill->forceFill(['ended_at' => now(), 'ended_by_user_id' => $user->getKey()])->save();
+        $this->audit->record('roll_call.ended', subject: $drill, site: $site, context: $drill->counts(), actorUserId: $user->getKey());
+
+        $rollCall = $this->create($site, $user, RollCall::KIND_EMERGENCY, false, $drill);
+        $kept = 0;
+
+        $entries = $rollCall->entries()->whereNotNull('visit_id')->get()
+            ->keyBy(fn (RollCallEntry $entry): string => $entry->visit_id.'|'.$entry->visitor_id);
+
+        foreach ($drill->entries()->orderBy('id')->get() as $old) {
+            if ($old->source === RollCallEntry::SOURCE_MANUAL) {
+                $copy = $rollCall->entries()->create($old->only(['source', 'first_name', 'last_name', 'company', 'status']));
+                $copy->forceFill($old->only(['status_changed_at', 'status_changed_by_user_id']))->save();
+                $kept++;
+
+                continue;
+            }
+
+            $new = $entries->get($old->visit_id.'|'.$old->visitor_id);
+
+            if ($new !== null && $old->status !== RollCallEntry::UNACCOUNTED) {
+                $new->forceFill($old->only(['status', 'status_changed_at', 'status_changed_by_user_id']))->save();
+                $kept++;
+            }
+        }
+
+        // No drill report is sent: the emergency's report covers it, and the audit log keeps the drill.
+        $this->audit->record('roll_call.escalated', subject: $drill, site: $site, context: [
+            'emergency_roll_call_id' => $rollCall->getKey(),
+            'marks_kept' => $kept,
+        ], actorUserId: $user->getKey());
+
+        return $rollCall;
+    }
+
+    /**
+     * Call inside a transaction holding the site lock.
+     */
+    private function create(Site $site, User $user, string $kind, bool $sendDrillMessages, ?RollCall $escalatedFrom = null): RollCall
+    {
+        $rollCall = RollCall::query()->create([
+            'site_id' => $site->getKey(),
+            'kind' => $kind,
+            'started_at' => now(),
+            'started_by_user_id' => $user->getKey(),
+        ]);
+
+        $people = $this->register->people($site);
+
+        foreach ($people as $person) {
+            $this->addPerson($rollCall, $person, RollCallEntry::SOURCE_SNAPSHOT);
+        }
+
+        $messages = ($kind === RollCall::KIND_EMERGENCY || $sendDrillMessages) && $this->broadcast->request($rollCall);
+
+        $context = ['kind' => $kind, 'people' => count($people), 'messages' => $messages];
+
+        if ($escalatedFrom !== null) {
+            $context['escalated_from'] = $escalatedFrom->getKey();
+        }
+
+        $this->audit->record('roll_call.started', subject: $rollCall, site: $site, context: $context, actorUserId: $user->getKey());
+
+        return $rollCall;
     }
 
     /**

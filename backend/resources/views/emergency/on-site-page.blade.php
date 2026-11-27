@@ -18,6 +18,13 @@
             <a href="{{ route('reception.roll-calls.show', $openRollCall) }}" class="btn btn-error btn-lg">
                 {{ __('Laufende Anwesenheitskontrolle öffnen') }}
             </a>
+            @if ($openRollCall->kind === \App\Emergency\RollCall::KIND_DRILL)
+                {{-- Fork: a drill left open must never block a real emergency. --}}
+                <button type="button" class="btn btn-error btn-lg btn-outline" data-test="escalate"
+                        x-data x-on:click="if (confirm(@js(__('Echter Notfall? Die Übung wird beendet und eine Notfall-Anwesenheitskontrolle mit allen aktuell angemeldeten Personen gestartet. Bereits erfasste Personen bleiben erfasst.').($messagesAvailable ? ' '.__('Alle angemeldeten Besucher erhalten sofort eine Notfallnachricht.') : '')))) $wire.startRollCall('emergency')">
+                    {{ __('Echter Notfall') }}
+                </button>
+            @endif
         @else
             <div class="flex flex-wrap gap-2" x-data="{ sendDrillMessages: false }">
                 <button type="button" class="btn btn-error btn-lg"

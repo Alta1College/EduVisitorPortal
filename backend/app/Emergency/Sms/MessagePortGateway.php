@@ -86,7 +86,7 @@ class MessagePortGateway implements SmsGateway
         } catch (Throwable $exception) {
             Log::error('emergency_sms_request_failed', ['messages' => count($batch), 'error' => class_basename($exception)]);
 
-            return $this->failAll($batch, 'CONNECTION_FAILED');
+            return $this->failAll($batch, 'CONNECTION_FAILED', temporary: true);
         }
 
         if (! $response->successful()) {
@@ -96,7 +96,10 @@ class MessagePortGateway implements SmsGateway
                 'hint' => $response->status() === 401 ? 'check MESSAGEPORT_ACCESS_TOKEN and MESSAGEPORT_TOKEN_ID' : null,
             ]);
 
-            return $this->failAll($batch, 'HTTP_'.$response->status());
+            // Timeouts, rate limits and server errors pass; anything else (e.g. 401) needs a person.
+            $temporary = in_array($response->status(), [408, 425, 429], true) || $response->serverError();
+
+            return $this->failAll($batch, 'HTTP_'.$response->status(), $temporary);
         }
 
         return $this->results($batch, $response);
@@ -153,12 +156,12 @@ class MessagePortGateway implements SmsGateway
      * @param  list<SmsMessage>  $messages
      * @return array<string, SmsResult>
      */
-    private function failAll(array $messages, string $code): array
+    private function failAll(array $messages, string $code, bool $temporary = false): array
     {
         $results = [];
 
         foreach ($messages as $message) {
-            $results[$message->reference] = SmsResult::failed($code);
+            $results[$message->reference] = $temporary ? SmsResult::temporaryFailure($code) : SmsResult::failed($code);
         }
 
         return $results;

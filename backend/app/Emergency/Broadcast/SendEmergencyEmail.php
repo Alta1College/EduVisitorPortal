@@ -13,6 +13,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -34,6 +35,24 @@ class SendEmergencyEmail implements ShouldQueue
     public function __construct(public readonly int $notificationId) {}
 
     public function handle(): void
+    {
+        // Claim the message: the same row can be queued twice (a broadcast retry re-queues every
+        // e-mail still pending), and two workers must never both send it. Whoever holds the lock
+        // reads the status inside it, so a later job sees "sent" and stops.
+        $lock = Cache::lock('emergency-email:'.$this->notificationId, $this->timeout + 30);
+
+        if (! $lock->get()) {
+            return; // another worker is sending this e-mail right now
+        }
+
+        try {
+            $this->sendClaimed();
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function sendClaimed(): void
     {
         $row = EmergencyNotification::query()->with(['visitor', 'rollCall.site'])->find($this->notificationId);
 

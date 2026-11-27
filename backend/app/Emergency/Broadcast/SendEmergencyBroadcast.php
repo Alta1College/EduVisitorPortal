@@ -12,6 +12,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Jobs\SyncJob;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
@@ -26,10 +28,11 @@ class SendEmergencyBroadcast implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
 
-    public int $tries = 3;
+    /** About two minutes in all: long enough for a short provider outage, short for an emergency. */
+    public int $tries = 5;
 
-    /** @var list<int> seconds before the second and third try */
-    public array $backoff = [5, 20];
+    /** @var list<int> seconds before each further try */
+    public array $backoff = [5, 15, 30, 60];
 
     public int $timeout = 90;
 
@@ -37,16 +40,36 @@ class SendEmergencyBroadcast implements ShouldQueue
 
     public function handle(EmergencyBroadcast $broadcast): void
     {
-        $broadcast->send($this->rollCallId);
+        if (! $broadcast->send($this->rollCallId)) {
+            return;
+        }
+
+        // Some texts hit a temporary problem and are still pending: try again shortly, or give up
+        // on them (shown as failed on the board) after the last try.
+        $attempt = $this->attempts();
+
+        // The sync queue (no worker) cannot come back later, so it gives up at once.
+        if ($this->job !== null && ! $this->job instanceof SyncJob && $attempt < $this->tries) {
+            $this->release($this->backoff[$attempt - 1] ?? 60);
+
+            return;
+        }
+
+        $this->failPendingSms();
     }
 
     public function failed(Throwable $exception): void
     {
         report($exception);
+        $this->failPendingSms();
+    }
+
+    private function failPendingSms(): void
+    {
         EmergencyNotification::query()
             ->where('roll_call_id', $this->rollCallId)
             ->where('channel', EmergencyNotification::CHANNEL_SMS)
             ->where('status', EmergencyNotification::PENDING)
-            ->update(['status' => EmergencyNotification::FAILED, 'error_code' => 'ERROR']);
+            ->update(['status' => EmergencyNotification::FAILED, 'error_code' => DB::raw("COALESCE(error_code, 'ERROR')")]);
     }
 }

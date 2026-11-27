@@ -80,28 +80,31 @@ class EmergencyBroadcast
      * still pending are sent, so a crash part-way never leaves the rest of the list without a
      * message. A crash between the provider accepting the SMS and the row being updated can
      * repeat that text on the retry: in an emergency a duplicate is better than nothing.
+     *
+     * Returns true when some texts hit a temporary problem (provider unreachable, 429, 5xx) and
+     * are still pending: the job then tries again after a short wait.
      */
-    public function send(int $rollCallId): void
+    public function send(int $rollCallId): bool
     {
         $lock = Cache::lock('emergency-broadcast:'.$rollCallId, 120);
 
         if (! $lock->get()) {
-            return; // another worker is sending this roll call's messages right now
+            return false; // another worker is sending this roll call's messages right now
         }
 
         try {
-            $this->sendLocked($rollCallId);
+            return $this->sendLocked($rollCallId);
         } finally {
             $lock->release();
         }
     }
 
-    private function sendLocked(int $rollCallId): void
+    private function sendLocked(int $rollCallId): bool
     {
         $rollCall = RollCall::query()->with('site')->find($rollCallId);
 
         if ($rollCall === null || $rollCall->broadcast_at === null) {
-            return; // gone, or no messages requested
+            return false; // gone, or no messages requested
         }
 
         $drill = $rollCall->kind === RollCall::KIND_DRILL;
@@ -121,25 +124,37 @@ class EmergencyBroadcast
         $sms = $this->sendSms($rollCall, $smsRows, $visitors, $this->smsText($drill, $siteName, $locale));
         $pendingEmails = $emailRows->where('status', EmergencyNotification::PENDING);
 
+        // A job may still be queued for some of these (e.g. after a retry); SendEmergencyEmail
+        // claims each row before sending, so a duplicate job sends nothing.
         foreach ($pendingEmails as $row) {
             SendEmergencyEmail::dispatch($row->getKey());
         }
 
+        $retry = $sms['retrying'] > 0;
+
         if ($sms['accepted'] + $sms['failed'] === 0 && $pendingEmails->isEmpty()
             && $smsRows->every(fn (EmergencyNotification $row): bool => ! $row->wasRecentlyCreated)) {
-            return; // a repeat run with nothing left to send
+            return $retry; // a repeat run with nothing new to record
         }
 
-        $this->audit->record('roll_call.broadcast', subject: $rollCall, site: $rollCall->site_id, context: [
+        $context = [
             'kind' => $rollCall->kind,
             'sms_accepted' => $sms['accepted'],
             'sms_failed' => $sms['failed'],
             'sms_no_mobile' => $smsRows->where('status', EmergencyNotification::NO_MOBILE)->count(),
             'emails' => $pendingEmails->count(),
             'dry_run' => (bool) config('messageport.dry_run'),
-        ], actorUserId: $rollCall->started_by_user_id);
+        ];
+
+        if ($retry) {
+            $context['sms_retrying'] = $sms['retrying'];
+        }
+
+        $this->audit->record('roll_call.broadcast', subject: $rollCall, site: $rollCall->site_id, context: $context, actorUserId: $rollCall->started_by_user_id);
 
         Log::info('emergency_broadcast_sent', ['roll_call_id' => $rollCallId, 'drill' => $drill, ...$sms, 'emails' => $pendingEmails->count()]);
+
+        return $retry;
     }
 
     public function smsText(bool $drill, string $siteName, string $locale): string
@@ -233,14 +248,19 @@ class EmergencyBroadcast
     /**
      * @param  Collection<int, EmergencyNotification>  $rows
      * @param  Collection<int, Visitor>  $visitors
-     * @return array{accepted: int, failed: int}
+     * @return array{accepted: int, failed: int, retrying: int}
      */
     private function sendSms(RollCall $rollCall, Collection $rows, Collection $visitors, string $body): array
     {
-        $pending = $rows->where('status', EmergencyNotification::PENDING)->keyBy('reference');
+        // Re-read: a delivery receipt may have arrived for a text an earlier, timed-out try sent.
+        $stillPending = EmergencyNotification::query()
+            ->whereIn('id', $rows->where('status', EmergencyNotification::PENDING)->pluck('id')->all())
+            ->where('status', EmergencyNotification::PENDING)
+            ->pluck('id')->all();
+        $pending = $rows->whereIn('id', $stillPending)->keyBy('reference');
 
         if ($pending->isEmpty()) {
-            return ['accepted' => 0, 'failed' => 0];
+            return ['accepted' => 0, 'failed' => 0, 'retrying' => 0];
         }
 
         $messages = $pending->map(fn (EmergencyNotification $row): SmsMessage => new SmsMessage(
@@ -257,13 +277,26 @@ class EmergencyBroadcast
             $results = [];
         }
 
-        $counts = ['accepted' => 0, 'failed' => 0];
+        $counts = ['accepted' => 0, 'failed' => 0, 'retrying' => 0];
 
         foreach ($pending as $reference => $row) {
-            $result = $results[$reference] ?? SmsResult::failed('ERROR');
-            $row->forceFill($result->accepted
-                ? ['status' => EmergencyNotification::ACCEPTED]
-                : ['status' => EmergencyNotification::FAILED, 'error_code' => $result->errorCode])->save();
+            // No result at all (the gateway threw): treat as temporary and try again.
+            $result = $results[$reference] ?? SmsResult::temporaryFailure('ERROR');
+
+            if ($result->temporary) {
+                // Stays pending for the next try; the code shows what went wrong meanwhile.
+                EmergencyNotification::query()->whereKey($row->getKey())->where('status', EmergencyNotification::PENDING)
+                    ->update(['error_code' => $result->errorCode]);
+                $counts['retrying']++;
+
+                continue;
+            }
+
+            // Only from pending: a delivery receipt that arrived during the provider call wins.
+            EmergencyNotification::query()->whereKey($row->getKey())->where('status', EmergencyNotification::PENDING)
+                ->update($result->accepted
+                    ? ['status' => EmergencyNotification::ACCEPTED, 'error_code' => null]
+                    : ['status' => EmergencyNotification::FAILED, 'error_code' => $result->errorCode]);
             $counts[$result->accepted ? 'accepted' : 'failed']++;
         }
 
