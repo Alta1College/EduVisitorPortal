@@ -11,7 +11,9 @@ namespace App\Reports;
 /**
  * CSV for spreadsheets: UTF-8 with a byte-order mark (so Excel shows accents), and cells that
  * a spreadsheet would run as a formula (=, +, -, @, tab, carriage return) are prefixed with an
- * apostrophe so visitor-entered text cannot become a formula.
+ * apostrophe so visitor-entered text cannot become a formula. Plain phone numbers and numbers
+ * (digits, spaces, brackets, hyphens, an optional leading +) are left alone: they cannot call a
+ * function, and "+61 412 345 678" must stay a phone number.
  */
 final class Csv
 {
@@ -51,6 +53,10 @@ final class Csv
         }
 
         $value = (string) $value;
+
+        if (preg_match('/^\+?[0-9 ()-]+$/', $value) === 1) {
+            return $value;
+        }
 
         return $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$value : $value;
     }

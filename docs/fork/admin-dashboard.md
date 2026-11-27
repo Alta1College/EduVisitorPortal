@@ -102,7 +102,7 @@ Code: `backend/app/Reports/*`, views `resources/views/reports/*`, mail `resource
 | Roll-call record | Queued when a roll call (drill or emergency) is ended | Everyone on the list with their final status, who started and ended it, emergency message delivery counts. Safety notes (e.g. medical) are left out | Yes |
 
 - Each email has a short summary, the full report as an A4 PDF (Gotenberg) and the figures as CSV. If Gotenberg fails, the email still goes out with the CSV and says so.
-- **Recipients:** Admin → Organisation settings → **Reports**: comma-separated addresses per report. Each site can override them (site settings). Sites with the same recipients share one report; an empty list sends nothing (the default).
+- **Recipients:** Admin → Organisation settings → **Reports**: comma-separated addresses per report. Each site can override them (site settings): an empty site field follows the organisation, and `none` switches that report off for the site. Sites with the same recipients share one report; an empty organisation list sends nothing (the default). Addresses and times are checked when the settings are saved.
 - Times use the application timezone. Run by hand: `php artisan visitorportal:reports:send weekly|monthly [--dry-run]` (the dry run lists recipient counts and sites only).
 - Every report sent is audited as `report.sent` (report, sites, number of recipients).
 

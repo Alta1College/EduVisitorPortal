@@ -1,0 +1,26 @@
+name: Question or usage help
+description: Ask how to set up or use Edu Visitor Portal.
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [README](https://github.com/Alta1College/EduVisitorPortal#readme) and the guides in `docs/` first.
+        Do not post passwords, keys, visitor details or other personal data. Report security problems privately (see SECURITY.md).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What are you trying to do, and what happened?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag or commit, e.g. v1.0.0
+    validations:
+      required: false

@@ -221,7 +221,7 @@ Application retention does not replace backup retention, Docker volume retention
 
 ## Updates
 
-For the changes and requirements specific to v0.9.0 -> v0.9.1, see the [v0.9.1 release notes](releases/v0.9.1.md). This update adds no application database migrations or changes to application role/permission definitions. A fully migrated v0.9.0 installation is expected to have no new migrations to apply.
+Each release's notes in [docs/releases](releases/) say what changes and what that update needs beyond the steps below: new database migrations, a permission sync (`visitorportal:sync-permissions`), new configuration, or a minimum version to update from. Read the notes for every release between your current version and the target before starting.
 
 ### PHP And Dependency Security Updates
 
@@ -253,10 +253,10 @@ The following commands use the supplied `docker-compose.prod.yml` and service na
 
 #### 1. Select And Pull The Release Image
 
-After recording the old image reference and backing up the original configuration, change only `VISITORPORTAL_IMAGE` in the existing production `.env`. For v0.9.1:
+After recording the old image reference and backing up the original configuration, change only `VISITORPORTAL_IMAGE` in the existing production `.env`, for example:
 
 ```env
-VISITORPORTAL_IMAGE=ghcr.io/alta1college/eduvisitorportal:v0.9.1
+VISITORPORTAL_IMAGE=ghcr.io/alta1college/eduvisitorportal:v1.0.0
 ```
 
 Pull the application image before entering maintenance mode; the running containers still use the previous image:
@@ -298,7 +298,7 @@ docker compose -f docker-compose.prod.yml exec --user www-data app php artisan r
 docker compose -f docker-compose.prod.yml exec --user www-data app php artisan view:cache
 ```
 
-For v0.9.0 -> v0.9.1, verify PHP 8.4.27 and expect no new migrations on an already fully migrated database. Run `visitorportal:sync-permissions` when a release changes application authorization definitions or its upgrade instructions require it; this release introduces no such changes.
+Run `visitorportal:sync-permissions` when the release notes say the release changes permission definitions; running it when nothing changed is harmless.
 
 The image already contains the installed dependencies and published Filament assets. Rebuilding dependencies inside a running production container is not required.
 
@@ -350,8 +350,8 @@ Use the committed lockfiles: `composer install` and `npm ci` install the release
 
 If validation fails, re-enable maintenance mode if the app was resumed and stop background services. For Docker, restore the recorded previous image reference in the existing `.env` and recreate `app`, `queue` and `scheduler` in the same controlled sequence, retaining configuration and data volumes. For source/LAMP, restore the previous application build and its matching dependencies/assets, then rebuild caches and restart services.
 
-v0.9.1 introduces no application schema migrations, but an image/code rollback does not undo data written after the update. Test rollback on the isolated upgrade environment. If restoring a backup is necessary, account for writes made since that backup instead of automatically replacing a live database.
+An image/code rollback does not undo migrations or data written after the update; the release notes say whether a release adds migrations and whether they can be rolled back. Test rollback on the isolated upgrade environment. If restoring a backup is necessary, account for writes made since that backup instead of automatically replacing a live database.
 
-The previous release contains the security issues fixed by v0.9.1. Treat a rollback as temporary recovery and plan the corrected security update before returning to normal operation.
+If the release you are leaving fixed security problems, the previous release still has them. Treat a rollback as temporary recovery and plan the corrected update before returning to normal operation.
 
 Before a real go-live, complete the [Go-Live Checklist](go-live-checklist.md).

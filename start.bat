@@ -15,6 +15,14 @@ if not exist "%ENV_FILE%" (
     echo Created %ENV_FILE% from %ENV_EXAMPLE%.
 )
 
+findstr /C:"RELEASE_VERSION_PLACEHOLDER" "%ENV_FILE%" >nul 2>&1
+if not errorlevel 1 (
+    echo %ENV_FILE% has no release version ^(this looks like a source checkout, not a release ZIP^).
+    echo Set VISITORPORTAL_VERSION in %ENV_FILE% to a published tag, e.g. VISITORPORTAL_VERSION=v1.0.0,
+    echo or use the demo ZIP from the GitHub release page.
+    exit /b 1
+)
+
 docker info >nul 2>&1
 if errorlevel 1 (
     echo Docker is not running. Please start Docker Desktop and run this file again.
@@ -30,7 +38,7 @@ if errorlevel 1 (
 
 echo [1/3] Pulling Edu Visitor Portal images...
 docker compose --env-file "%ENV_FILE%" -f "%COMPOSE_FILE%" pull
-if errorlevel 1 echo Image pull failed. Continuing with locally available images if present.
+if errorlevel 1 echo Image pull failed ^(no network, or the image is not public yet^). Continuing with locally available images if present.
 
 echo [2/3] Starting Edu Visitor Portal...
 docker compose --env-file "%ENV_FILE%" -f "%COMPOSE_FILE%" up -d

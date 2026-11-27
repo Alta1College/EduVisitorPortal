@@ -16,6 +16,9 @@ use Illuminate\Support\Collection;
  * Who gets a report. Each site has a recipient list (organisation setting, which a site can
  * override); sites with the same list share one report, so someone who covers every site gets
  * one email, not one per site. Empty list: no report.
+ *
+ * On a site, an empty field follows the organisation; "none" stops the report for that site
+ * (it parses to no addresses but, unlike empty, is stored as the site's own value).
  */
 class ReportRecipients
 {
@@ -25,8 +28,11 @@ class ReportRecipients
 
     public const ROLL_CALL = 'organisation.reports.roll_call_recipients';
 
-    /** Comma- or semicolon-separated email addresses. */
-    public const LIST_PATTERN = '/^\s*[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+(\s*[,;]\s*[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+)*\s*[,;]?\s*$/';
+    /** Site value meaning "no report for this site". */
+    public const NONE = 'none';
+
+    /** Comma- or semicolon-separated email addresses, or "none". */
+    public const LIST_PATTERN = '/^\s*(?:none|[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+(\s*[,;]\s*[^@\s,;]+@[^@\s,;]+\.[^@\s,;]+)*\s*[,;]?)\s*$/i';
 
     public function __construct(private readonly SettingsRepository $settings) {}
 

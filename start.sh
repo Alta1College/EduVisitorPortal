@@ -16,6 +16,13 @@ if [ ! -f "$ENV_FILE" ]; then
     echo "Created $ENV_FILE from $ENV_EXAMPLE."
 fi
 
+if grep -q "RELEASE_VERSION_PLACEHOLDER" "$ENV_FILE"; then
+    echo "$ENV_FILE has no release version (this looks like a source checkout, not a release ZIP)."
+    echo "Set VISITORPORTAL_VERSION in $ENV_FILE to a published tag, e.g. VISITORPORTAL_VERSION=v1.0.0,"
+    echo "or use the demo ZIP from the GitHub release page."
+    exit 1
+fi
+
 if ! docker info >/dev/null 2>&1; then
     echo "Docker is not running. Please start Docker Desktop and run this script again."
     exit 1
@@ -28,7 +35,7 @@ if ! docker compose version >/dev/null 2>&1; then
 fi
 
 echo "[1/3] Pulling Edu Visitor Portal images..."
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull || echo "Image pull failed. Continuing with locally available images if present."
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull || echo "Image pull failed (no network, or the image is not public yet). Continuing with locally available images if present."
 
 echo "[2/3] Starting Edu Visitor Portal..."
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d

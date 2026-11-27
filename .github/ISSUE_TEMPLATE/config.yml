@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 
 contact_links:
-  - name: General question or usage help
-    url: https://github.com/Alta1College/EduVisitorPortal/discussions
-    about: Please use discussions for questions, ideas, and usage help.
+  - name: Documentation
+    url: https://github.com/Alta1College/EduVisitorPortal#readme
+    about: Setup, deployment and feature guides. For questions, use the "Question or usage help" form.

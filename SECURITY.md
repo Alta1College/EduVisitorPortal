@@ -6,8 +6,8 @@ VisitorPortal does not currently have a long-term support release line.
 
 | Version | Support Status |
 | --- | --- |
-| Current `main` branch | Best-effort security fixes |
-| Current tagged releases | Best-effort security fixes |
+| Latest release (`main` branch and the newest `v*` tag) | Best-effort security fixes |
+| `develop` (unreleased work) | Fixes land here first; not for production |
 | Older commits or demo snapshots | Not supported |
 
 This policy may change once the project has stable public releases.
